@@ -1,0 +1,42 @@
+{
+  "baseTemplate": "base-template.md",
+  "styles": {
+    "default": {
+      "name": "Dungeon Crawler Carl (Default)",
+      "file": "styles/default.md",
+      "description": "Sarcastic AI from the book series"
+    },
+    "corporate": {
+      "name": "Corporate Buzzword",
+      "file": "styles/corporate.md", 
+      "description": "LinkedIn-style business achievement"
+    },
+    "funny": {
+      "name": "Absurdly Hilarious",
+      "file": "styles/funny.md",
+      "description": "Over-the-top comedy with ridiculous explanations"
+    },
+    "nice": {
+      "name": "Wholesome & Encouraging", 
+      "file": "styles/nice.md",
+      "description": "Genuinely supportive and uplifting"
+    },
+    "mean": {
+      "name": "Brutally Honest",
+      "file": "styles/mean.md",
+      "description": "Playfully harsh and sarcastic roasting"
+    }
+  },
+  "experimental": {
+    "pirate": {
+      "name": "Pirate Captain",
+      "file": "styles/pirate.md",
+      "description": "Ahoy matey! Achievements fit for the high seas"
+    },
+    "shakespeare": {
+      "name": "Shakespearean",
+      "file": "styles/shakespeare.md", 
+      "description": "Elizabethan-era achievements in iambic pentameter"
+    }
+  }
+}

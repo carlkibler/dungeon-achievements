@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Achievements Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e6ed;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #a0a6ad;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .input-section {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 1.1rem;
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255,215,0,0.3);
+        }
+
+        .examples-section {
+            margin-bottom: 30px;
+        }
+
+        .examples-title {
+            color: #ffd700;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .example-btn {
+            padding: 12px 18px;
+            background: rgba(255,215,0,0.1);
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-btn:hover {
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.2);
+            transform: translateY(-2px);
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            border: none;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .achievements-section {
+            margin-top: 30px;
+        }
+
+        .achievements-title {
+            color: #ffd700;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .achievement {
+            background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .achievement:hover {
+            border-color: #ffd700;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,215,0,0.2);
+        }
+
+        .achievement-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            flex: 1;
+            cursor: pointer;
+            white-space: pre-line;
+            word-wrap: break-word;
+        }
+
+        .achievement-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 80px;
+        }
+
+        .copy-btn {
+            padding: 8px 12px;
+            background: rgba(255,215,0,0.2);
+            border: 1px solid #4a5568;
+            border-radius: 6px;
+            color: #ffd700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,215,0,0.4);
+            border-color: #ffd700;
+        }
+
+        .countdown {
+            text-align: center;
+            color: #ffd700;
+            font-size: 3rem;
+            font-weight: bold;
+            padding: 40px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            animation: pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.7; }
+        }
+
+        .loading {
+            text-align: center;
+            color: #ffd700;
+            font-size: 1.1rem;
+            padding: 30px;
+        }
+
+        .error {
+            background: rgba(220,20,60,0.2);
+            border: 2px solid #dc143c;
+            color: #ffb6c1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .recent-section {
+            margin-top: 40px;
+            border-top: 2px solid #4a5568;
+            padding-top: 30px;
+        }
+
+        .recent-title {
+            color: #a0a6ad;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .input-section {
+                padding: 20px;
+            }
+            
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">🏆 Dungeon Achievements 🏆</h1>
+            <p class="subtitle">
+                Generate amusing fake achievements in the style of the trolling AI from "Dungeon Crawler Carl"!<br>
+                Enter any activity or action below and receive three wickedly creative achievements.
+            </p>
+        </header>
+
+        <div class="input-section">
+            <label class="input-label" for="activityInput">What did you do?</label>
+            <textarea 
+                id="activityInput" 
+                class="input-field" 
+                placeholder="e.g., Made coffee this morning, Survived a Zoom meeting, Finished a project..."
+            ></textarea>
+
+            <div class="examples-section">
+                <h3 class="examples-title">Quick Examples:</h3>
+                <div class="examples-grid">
+                    <button class="example-btn" onclick="setExample('Made coffee this morning')">☕ Made coffee this morning</button>
+                    <button class="example-btn" onclick="setExample('Survived a Zoom meeting')">💻 Survived a Zoom meeting</button>
+                    <button class="example-btn" onclick="setExample('Forgot to save my work')">💾 Forgot to save my work</button>
+                    <button class="example-btn" onclick="setExample('Successfully parallel parked')">🚗 Successfully parallel parked</button>
+                </div>
+            </div>
+
+            <button id="generateBtn" class="generate-btn" onclick="generateAchievements()">
+                Generate Achievements
+            </button>
+        </div>
+
+        <div id="achievementsSection" class="achievements-section" style="display: none;">
+            <h2 class="achievements-title">Your Achievements:</h2>
+            <div id="achievementsList"></div>
+        </div>
+
+        <div id="recentSection" class="recent-section" style="display: none;">
+            <h3 class="recent-title">Recent Achievements:</h3>
+            <div id="recentList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        
+        function setExample(text) {
+            document.getElementById('activityInput').value = text;
+        }
+
+        async function showCountdown(achievementsList) {
+            const loadingMessages = [
+                '🎲 The AI is rendering judgment of your feats...',
+                '⚔️ The digital oracle contemplates your deeds...',
+                '🏆 Achievement algorithms are evaluating your worth...',
+                '🎯 The cosmic scoreboard is updating...',
+                '⭐ Quantifying your questionable life choices...',
+                '🔮 The AI overlord is amused by your activities...',
+                '🎪 Processing your magnificent absurdity...',
+                '⚡ Converting mundane actions into glory...'
+            ];
+            
+            const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+            achievementsList.innerHTML = `<div class="loading">${randomMessage}</div>`;
+            
+            // Small delay for UX smoothness
+            return new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        async function generateAchievements() {
+            const input = document.getElementById('activityInput').value.trim();
+            if (!input) {
+                alert('Please enter an activity first!');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            const achievementsSection = document.getElementById('achievementsSection');
+            const achievementsList = document.getElementById('achievementsList');
+
+            // Show countdown and loading state
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            achievementsSection.style.display = 'block';
+            
+            // Show countdown from 3, 2, 1 over 4 seconds
+            await showCountdown(achievementsList);
+
+            try {
+                const response = await fetch(`${API_BASE}/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ activity: input })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                displayAchievements(data.achievements, input);
+                saveToRecent(input, data.achievements);
+                loadRecent();
+                
+                // Smooth scroll to achievements
+                achievementsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch (error) {
+                console.error('Error generating achievements:', error);
+                achievementsList.innerHTML = `
+                    <div class="error">
+                        ⚠️ Failed to generate achievements: ${error.message}<br>
+                        Please try again in a moment.
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Achievements';
+            }
+        }
+
+        function displayAchievements(achievements, activity) {
+            const achievementsList = document.getElementById('achievementsList');
+            achievementsList.innerHTML = achievements.map((achievement, index) => {
+                // Handle both old string format and new structured format
+                let formattedText;
+                let copyText;
+                
+                if (typeof achievement === 'string') {
+                    // Old format - use existing formatting function
+                    formattedText = formatAchievementText(achievement);
+                    copyText = achievement;
+                } else {
+                    // New structured format - build HTML from components
+                    formattedText = `
+                        <div style="font-weight: bold; color: #ffd700; margin-bottom: 12px; font-size: 1.1em; line-height: 1.3;">
+                            ${escapeHtml(achievement.title)}
+                        </div>
+                        <div style="margin-bottom: 12px; line-height: 1.5; color: #e0e6ed;">
+                            ${escapeHtml(achievement.description)}
+                        </div>
+                        <div style="color: #a0a6ad; font-style: italic; margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,215,0,0.2);">
+                            ${escapeHtml(achievement.reward)}
+                        </div>
+                    `;
+                    copyText = `${achievement.title}\n${achievement.description}\n${achievement.reward}`;
+                }
+                
+                return `
+                    <div class="achievement" onclick="copyToClipboard('${escapeHtml(copyText)}', ${index})">
+                        <div class="achievement-actions">
+                            <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('${escapeHtml(copyText)}', ${index})">
+                                📋 Copy
+                            </button>
+                            <button class="copy-image-btn copy-btn" onclick="event.stopPropagation(); copyAsImage(${index})">
+                                🖼️ Image
+                            </button>
+                        </div>
+                        <div class="achievement-text">${formattedText}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyToClipboard(text, index) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelectorAll('.copy-btn')[index];
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+
+        async function copyAsImage(index) {
+            const achievements = document.querySelectorAll('.achievement');
+            const achievement = achievements[index];
+            
+            if (!achievement) {
+                console.error('Achievement element not found');
+                return;
+            }
+
+            const imageBtn = achievement.querySelector('.copy-image-btn');
+            const originalText = imageBtn ? imageBtn.textContent : '';
+            
+            try {
+                if (imageBtn) {
+                    imageBtn.textContent = '📸 Creating...';
+                    imageBtn.disabled = true;
+                }
+
+                // Create a wrapper for better styling in the image
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = `
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                    padding: 30px;
+                    border-radius: 12px;
+                    font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
+                    color: #e0e6ed;
+                    max-width: 600px;
+                    margin: 0;
+                    position: absolute;
+                    left: -9999px;
+                    top: -9999px;
+                `;
+
+                // Clone the achievement content without buttons
+                const achievementClone = achievement.cloneNode(true);
+                const buttons = achievementClone.querySelectorAll('button');
+                buttons.forEach(btn => btn.remove());
+                
+                // Style the cloned achievement for image
+                achievementClone.style.cssText = `
+                    background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+                    border: 2px solid #ffd700;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin: 0;
+                    display: block;
+                    box-shadow: 0 4px 20px rgba(255,215,0,0.3);
+                `;
+
+                wrapper.appendChild(achievementClone);
+                document.body.appendChild(wrapper);
+
+                // Add watermark
+                const watermark = document.createElement('div');
+                watermark.style.cssText = `
+                    margin-top: 15px;
+                    text-align: center;
+                    color: #a0a6ad;
+                    font-size: 0.8rem;
+                    opacity: 0.7;
+                `;
+                watermark.textContent = '🏆 Generated by Dungeon Achievements Generator';
+                wrapper.appendChild(watermark);
+
+                // Capture the image
+                const canvas = await html2canvas(wrapper, {
+                    backgroundColor: null,
+                    scale: 2, // Higher resolution
+                    logging: false,
+                    allowTaint: true,
+                    useCORS: true,
+                    width: wrapper.offsetWidth,
+                    height: wrapper.offsetHeight
+                });
+
+                // Clean up
+                document.body.removeChild(wrapper);
+
+                // Convert to blob and copy to clipboard
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        
+                        if (imageBtn) {
+                            imageBtn.textContent = '✅ Image Copied!';
+                            setTimeout(() => {
+                                imageBtn.textContent = originalText;
+                                imageBtn.disabled = false;
+                            }, 2500);
+                        }
+                    } catch (clipError) {
+                        console.error('Failed to copy image to clipboard:', clipError);
+                        
+                        // Fallback: download the image
+                        const link = document.createElement('a');
+                        link.download = `achievement-${Date.now()}.png`;
+                        link.href = canvas.toDataURL();
+                        link.click();
+                        
+                        if (imageBtn) {
+                            imageBtn.textContent = '📥 Downloaded!';
+                            setTimeout(() => {
+                                imageBtn.textContent = originalText;
+                                imageBtn.disabled = false;
+                            }, 2500);
+                        }
+                    }
+                }, 'image/png');
+
+            } catch (error) {
+                console.error('Error creating image:', error);
+                if (imageBtn) {
+                    imageBtn.textContent = '❌ Failed';
+                    setTimeout(() => {
+                        imageBtn.textContent = originalText;
+                        imageBtn.disabled = false;
+                    }, 2500);
+                }
+            }
+        }
+
+        async function copyAsImageRecent(entryIndex, achIndex, buttonElement) {
+            // Find the achievement element relative to the button
+            const achievementElement = buttonElement.closest('.achievement');
+            if (!achievementElement) {
+                console.error('Could not find achievement element');
+                return;
+            }
+
+            const originalText = buttonElement.textContent;
+            
+            try {
+                buttonElement.textContent = '📸 Creating...';
+                buttonElement.disabled = true;
+
+                // Create a wrapper for better styling in the image
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = `
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                    padding: 30px;
+                    border-radius: 12px;
+                    font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
+                    color: #e0e6ed;
+                    max-width: 600px;
+                    margin: 0;
+                    position: absolute;
+                    left: -9999px;
+                    top: -9999px;
+                `;
+
+                // Clone the achievement content without buttons
+                const achievementClone = achievementElement.cloneNode(true);
+                const buttons = achievementClone.querySelectorAll('button');
+                buttons.forEach(btn => btn.remove());
+                
+                // Style the cloned achievement for image
+                achievementClone.style.cssText = `
+                    background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+                    border: 2px solid #ffd700;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin: 0;
+                    display: block;
+                    box-shadow: 0 4px 20px rgba(255,215,0,0.3);
+                `;
+
+                wrapper.appendChild(achievementClone);
+                document.body.appendChild(wrapper);
+
+                // Add watermark
+                const watermark = document.createElement('div');
+                watermark.style.cssText = `
+                    margin-top: 15px;
+                    text-align: center;
+                    color: #a0a6ad;
+                    font-size: 0.8rem;
+                    opacity: 0.7;
+                `;
+                watermark.textContent = '🏆 Generated by Dungeon Achievements Generator';
+                wrapper.appendChild(watermark);
+
+                // Capture the image
+                const canvas = await html2canvas(wrapper, {
+                    backgroundColor: null,
+                    scale: 2,
+                    logging: false,
+                    allowTaint: true,
+                    useCORS: true,
+                    width: wrapper.offsetWidth,
+                    height: wrapper.offsetHeight
+                });
+
+                // Clean up
+                document.body.removeChild(wrapper);
+
+                // Convert to blob and copy to clipboard
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        
+                        buttonElement.textContent = '✅ Image Copied!';
+                        setTimeout(() => {
+                            buttonElement.textContent = originalText;
+                            buttonElement.disabled = false;
+                        }, 2500);
+                    } catch (clipError) {
+                        console.error('Failed to copy image to clipboard:', clipError);
+                        
+                        // Fallback: download the image
+                        const link = document.createElement('a');
+                        link.download = `achievement-${Date.now()}.png`;
+                        link.href = canvas.toDataURL();
+                        link.click();
+                        
+                        buttonElement.textContent = '📥 Downloaded!';
+                        setTimeout(() => {
+                            buttonElement.textContent = originalText;
+                            buttonElement.disabled = false;
+                        }, 2500);
+                    }
+                }, 'image/png');
+
+            } catch (error) {
+                console.error('Error creating image:', error);
+                buttonElement.textContent = '❌ Failed';
+                setTimeout(() => {
+                    buttonElement.textContent = originalText;
+                    buttonElement.disabled = false;
+                }, 2500);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/'/g, '&#39;');
+        }
+
+        function formatAchievementText(achievement) {
+            // Don't double-escape - the text might already be coming through properly
+            let text = achievement;
+            
+            // Split into lines and format each section
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+            
+            if (lines.length <= 1) {
+                // If single line, still try to break it up by looking for patterns
+                const singleLine = escapeHtml(text);
+                if (singleLine.includes('Reward:')) {
+                    const parts = singleLine.split('Reward:');
+                    return `
+                        <div style="font-weight: bold; color: #ffd700; margin-bottom: 8px; line-height: 1.4;">${parts[0].trim()}</div>
+                        <div style="color: #a0a6ad; font-style: italic; margin-top: 8px;">Reward:${parts[1].trim()}</div>
+                    `;
+                }
+                return `<div style="line-height: 1.5;">${singleLine}</div>`;
+            }
+            
+            let formatted = '';
+            for (let i = 0; i < lines.length; i++) {
+                const line = escapeHtml(lines[i]);
+                
+                // First line is typically the title with trophy/emoji
+                if (i === 0) {
+                    formatted += `<div style="font-weight: bold; color: #ffd700; margin-bottom: 12px; font-size: 1.1em; line-height: 1.3;">${line}</div>`;
+                }
+                // Check if line starts with "Reward:" to style it differently
+                else if (line.toLowerCase().startsWith('reward:')) {
+                    formatted += `<div style="color: #a0a6ad; font-style: italic; margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,215,0,0.2);">${line}</div>`;
+                }
+                // Regular description lines (main text)
+                else {
+                    formatted += `<div style="margin-bottom: 8px; line-height: 1.5; color: #e0e6ed;">${line}</div>`;
+                }
+            }
+            
+            return formatted;
+        }
+
+        function saveToRecent(activity, achievements) {
+            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
+            const entry = {
+                activity,
+                achievements,
+                timestamp: new Date().toISOString()
+            };
+            
+            recent.unshift(entry);
+            // Keep only last 10 entries
+            recent.splice(10);
+            
+            localStorage.setItem('recentAchievements', JSON.stringify(recent));
+        }
+
+        function loadRecent() {
+            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
+            const recentSection = document.getElementById('recentSection');
+            const recentList = document.getElementById('recentList');
+
+            if (recent.length === 0) {
+                recentSection.style.display = 'none';
+                return;
+            }
+
+            recentSection.style.display = 'block';
+            recentList.innerHTML = recent.slice(0, 5).map((entry, entryIndex) => `
+                <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #4a5568; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="color: #a0a6ad; font-size: 0.9rem; margin-bottom: 10px;">
+                        "${entry.activity}" - ${new Date(entry.timestamp).toLocaleDateString()}
+                    </div>
+                    ${entry.achievements.map((achievement, achIndex) => {
+                        // Handle both old string format and new structured format
+                        let formattedText;
+                        let copyText;
+                        
+                        if (typeof achievement === 'string') {
+                            // Old format
+                            formattedText = formatAchievementText(achievement);
+                            copyText = achievement;
+                        } else {
+                            // New structured format
+                            formattedText = `
+                                <div style="font-weight: bold; color: #ffd700; margin-bottom: 8px; font-size: 1em; line-height: 1.3;">
+                                    ${escapeHtml(achievement.title)}
+                                </div>
+                                <div style="margin-bottom: 8px; line-height: 1.4; color: #e0e6ed; font-size: 0.9em;">
+                                    ${escapeHtml(achievement.description)}
+                                </div>
+                                <div style="color: #a0a6ad; font-style: italic; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,215,0,0.15); font-size: 0.85em;">
+                                    ${escapeHtml(achievement.reward)}
+                                </div>
+                            `;
+                            copyText = `${achievement.title}\n${achievement.description}\n${achievement.reward}`;
+                        }
+                        
+                        return `
+                            <div class="achievement" style="margin-bottom: 10px; padding: 10px;" onclick="copyToClipboard('${escapeHtml(copyText)}', 'recent-${entryIndex}-${achIndex}')">
+                                <div class="achievement-actions">
+                                    <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('${escapeHtml(copyText)}', 'recent-${entryIndex}-${achIndex}')">
+                                        📋
+                                    </button>
+                                    <button class="copy-image-btn copy-btn" onclick="event.stopPropagation(); copyAsImageRecent(${entryIndex}, ${achIndex}, this)">
+                                        🖼️
+                                    </button>
+                                </div>
+                                <div class="achievement-text" style="font-size: 0.9rem;">${formattedText}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `).join('');
+        }
+
+        // Load recent achievements on page load
+        document.addEventListener('DOMContentLoaded', loadRecent);
+
+        // Allow Enter to generate (Ctrl+Enter for newline in textarea)
+        document.getElementById('activityInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.ctrlKey) {
+                e.preventDefault();
+                generateAchievements();
+            }
+        });
+    </script>
+</body>
+</html>
