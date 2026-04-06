@@ -4,94 +4,66 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a serverless web application that generates amusing fake achievements in the style of the trolling AI from "Dungeon Crawler Carl". Users enter any activity and receive three creative achievements with copy-to-clipboard functionality and local storage for recent generations.
+Serverless web app that generates amusing fake achievements in the style of the trolling AI from "Dungeon Crawler Carl". Users enter any activity and receive three creative achievements with copy-to-clipboard and local storage for recent generations.
 
 ## Architecture
 
-**Minimal AWS Serverless Stack:**
-- **Single TypeScript Lambda** - Serves frontend HTML and handles `/generate` API calls
-- **AWS Bedrock** - Claude 3 Haiku for achievement generation via structured prompts
-- **CloudFront Distribution** - Global CDN for performance and caching
-- **API Gateway** - RESTful routing to Lambda function
+**Cloudflare Pages + OpenRouter:**
+- **`public/index.html`** — Single-page frontend (vanilla HTML/CSS/JS, no build step)
+- **`functions/generate.ts`** — Cloudflare Pages Function handling POST `/generate`
+- **OpenRouter** — AI provider; model switchable via `OPENROUTER_MODEL` env var (default: `anthropic/claude-3-5-haiku`)
 
 **Key Design Decisions:**
-- No database required - achievements stored in browser LocalStorage
-- Single Lambda handles both static serving and API to minimize cold starts
-- Vanilla HTML/CSS/JS frontend for zero build complexity
-- AWS SAM for infrastructure-as-code deployment
+- No database — achievements stored in browser LocalStorage
+- Vanilla frontend, zero build complexity
+- Prompts inlined in `functions/generate.ts` (CF Workers have no filesystem access)
+- `prompts/` directory kept as source-of-truth reference for prompt editing
 
-## Development Commands
+## Commands
 
 ```bash
-# Install dependencies
-npm install
-
-# Build TypeScript
-npm run build
-
-# Local development (requires SAM CLI)
-npm run dev
-
-# Deploy to AWS
-./deploy.sh [environment] [region]
-# Example: ./deploy.sh prod us-east-1
-
-# Clean build artifacts
-npm run clean
+make dev        # local dev server (reads .dev.vars)
+make deploy     # deploy to Cloudflare Pages
+make secret     # set OPENROUTER_API_KEY in CF
+make typecheck  # TypeScript type checking
+make open       # open https://dungeon-achievements.pages.dev
 ```
 
 ## Project Structure
 
 ```
-src/
-├── index.html      # Single-page frontend with embedded CSS/JS
-├── lambda.ts       # Dual-purpose Lambda (static + API handler)
-template.yaml       # SAM CloudFormation template
-deploy.sh          # One-command deployment script
+public/
+└── index.html          # Frontend with embedded CSS/JS
+functions/
+└── generate.ts         # CF Pages Function — calls OpenRouter API
+prompts/
+├── config.json         # Style registry (reference only, not loaded at runtime)
+├── base-template.md    # Base prompt template (reference)
+└── styles/             # Per-style prompt files (reference)
+wrangler.toml           # Cloudflare Pages config
+.dev.vars               # Local secrets (gitignored)
+.dev.vars.example       # Template for .dev.vars
+Makefile                # Dev shortcuts
 ```
-
-## Key Implementation Details
-
-### Frontend Features
-- Game-themed dark UI with gold accents and monospace fonts
-- LocalStorage persistence for recent achievements (last 10 entries)
-- Copy-to-clipboard with visual feedback
-- Responsive design with mobile optimization
-- Example activity buttons for quick testing
-
-### Backend Features
-- Bedrock integration with structured prompts for consistent style
-- Error handling with witty fallback achievements
-- CORS support for cross-origin requests
-- Simple rate limiting via Lambda concurrency
-- Extensible style system (default/corporate/funny/nice/mean)
-
-### AWS Infrastructure
-- CloudFront caches static assets globally
-- API calls bypass cache for real-time generation
-- IAM roles with minimal Bedrock permissions
-- Environment-based deployments (dev/prod)
 
 ## Adding New Features
 
-**Style Variations**: Extend the `stylePrompts` object in `lambda.ts:99` and add UI controls in the frontend
+**New style:** Add the style instruction string to the `STYLES` object in `functions/generate.ts`, add a pill button in `public/index.html`, and add a reference file in `prompts/styles/`.
 
-**Different AI Models**: Change `BEDROCK_MODEL_ID` environment variable in `template.yaml:15`
+**Switch AI model:** Change `OPENROUTER_MODEL` secret in Cloudflare dashboard, or locally in `.dev.vars`. Browse models at https://openrouter.ai/models.
 
-**Custom Domain**: Add Route 53 and certificate resources to SAM template
+**Custom domain:** Add via Cloudflare Pages dashboard → Custom domains.
 
-**Analytics**: Add CloudWatch custom metrics or integrate third-party services
+## Local Development
 
-## Deployment Requirements
+Requires a `.dev.vars` file (copy from `.dev.vars.example`):
+```
+OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_MODEL=anthropic/claude-3-5-haiku
+```
 
-- AWS CLI configured with appropriate permissions
-- SAM CLI installed
-- Node.js 18+ for TypeScript compilation
-- Bedrock model access in target region
+## Deployment
 
-## Security Considerations
+Hosted at https://dungeon-achievements.pages.dev
 
-- No API keys exposed in frontend code
-- IAM roles follow least-privilege principle
-- CORS configured for safe cross-origin requests
-- No sensitive data stored or transmitted
+Secrets stored in Cloudflare Pages dashboard (not in wrangler.toml).

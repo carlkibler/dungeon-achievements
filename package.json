@@ -1,40 +1,19 @@
 {
   "name": "dungeon-achievements",
-  "version": "1.0.0",
-  "description": "Dungeon Crawler Carl style achievement generator",
-  "main": "src/lambda.js",
+  "version": "2.0.0",
+  "description": "Dungeon Crawler Carl style achievement generator — Cloudflare Pages + OpenRouter",
   "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf .aws-sam dist",
-    "dev": "node dev-server.js",
-    "dev:sam": "sam local start-api --port 3000",
-    "deploy": "./deploy.sh",
-    "deploy:prod": "./deploy.sh prod",
-    "deploy:fast": "./deploy.sh --fast",
-    "deploy:fast:prod": "./deploy.sh --fast prod",
-    "test:prompts": "node prompt-tester.js",
-    "test:prompts:interactive": "node prompt-tester.js",
-    "test:prompts:external": "node test-prompts.js",
-    "logs": "aws logs tail /aws/lambda/dungeon-achievements-dev --follow --region us-west-2",
-    "logs:prod": "aws logs tail /aws/lambda/dungeon-achievements-prod --follow --region us-west-2"
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.400.0",
-    "@aws-sdk/credential-provider-ini": "^3.400.0"
+    "openai": "^4.67.0"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.119",
-    "@types/node": "^18.17.0",
-    "dotenv": "^17.2.2",
-    "typescript": "^5.1.6"
+    "@cloudflare/workers-types": "^4.20240924.0",
+    "typescript": "^5.1.6",
+    "wrangler": "^4.80.0"
   },
-  "keywords": [
-    "aws",
-    "lambda",
-    "bedrock",
-    "achievements",
-    "dungeon-crawler"
-  ],
-  "author": "",
   "license": "MIT"
 }

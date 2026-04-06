@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Achievements Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e6ed;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 1.6rem;
+            color: #ffd700;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.8), 0 0 20px rgba(255,215,0,0.3);
+            margin-bottom: 16px;
+            line-height: 1.5;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #a0a6ad;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .input-section {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 1.1rem;
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255,215,0,0.3);
+        }
+
+        .style-selector {
+            margin-top: 20px;
+        }
+
+        .style-label {
+            font-size: 0.9rem;
+            color: #a0a6ad;
+            margin-bottom: 10px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .style-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .style-pill {
+            padding: 7px 14px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #4a5568;
+            border-radius: 20px;
+            color: #a0a6ad;
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .style-pill:hover {
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .style-pill.active {
+            border-color: #ffd700;
+            color: #ffd700;
+            background: rgba(255,215,0,0.12);
+            box-shadow: 0 0 8px rgba(255,215,0,0.2);
+        }
+
+        .examples-section {
+            margin-top: 24px;
+            margin-bottom: 0;
+        }
+
+        .examples-title {
+            color: #ffd700;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .example-btn {
+            padding: 10px 14px;
+            background: rgba(255,215,0,0.07);
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            color: #c0c6cd;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .example-btn:hover {
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.15);
+            color: #e0e6ed;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            border: none;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 20px;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255,215,0,0.5);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .achievements-section {
+            margin-top: 30px;
+        }
+
+        .achievements-title {
+            color: #ffd700;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @keyframes achievementReveal {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .achievement {
+            background: linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(255,215,0,0.03) 100%);
+            border: 1px solid #4a5568;
+            border-left: 3px solid #ffd700;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            opacity: 0;
+            animation: achievementReveal 0.4s ease forwards;
+        }
+
+        .achievement:nth-child(1) { animation-delay: 0.05s; }
+        .achievement:nth-child(2) { animation-delay: 0.2s; }
+        .achievement:nth-child(3) { animation-delay: 0.35s; }
+
+        .achievement:hover {
+            border-color: #ffd700;
+            box-shadow: 0 4px 20px rgba(255,215,0,0.15);
+        }
+
+        .achievement-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            flex: 1;
+            cursor: pointer;
+            word-wrap: break-word;
+        }
+
+        .achievement-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 75px;
+        }
+
+        .copy-btn {
+            padding: 7px 10px;
+            background: rgba(255,215,0,0.12);
+            border: 1px solid #4a5568;
+            border-radius: 6px;
+            color: #ffd700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            white-space: nowrap;
+            font-family: inherit;
+            width: 72px;
+            text-align: center;
+            display: block;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,215,0,0.25);
+            border-color: #ffd700;
+        }
+
+        .loading {
+            text-align: center;
+            color: #ffd700;
+            font-size: 1rem;
+            padding: 30px;
+            line-height: 2;
+        }
+
+        .error {
+            background: rgba(220,20,60,0.15);
+            border: 1px solid #dc143c;
+            color: #ffb6c1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .recent-section {
+            margin-top: 40px;
+            border-top: 1px solid #4a5568;
+            padding-top: 30px;
+        }
+
+        .recent-title {
+            color: #a0a6ad;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .title {
+                font-size: 1.1rem;
+            }
+            .input-section {
+                padding: 20px;
+            }
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">🏆 Dungeon Achievements 🏆</h1>
+            <p class="subtitle">
+                Generate amusing fake achievements in the style of the trolling AI from "Dungeon Crawler Carl"!<br>
+                Enter any activity below and receive three wickedly creative achievements.
+            </p>
+        </header>
+
+        <div class="input-section">
+            <label class="input-label" for="activityInput">What did you do?</label>
+            <textarea
+                id="activityInput"
+                class="input-field"
+                placeholder="e.g., Made coffee this morning, Survived a Zoom meeting, Finished a project..."
+            ></textarea>
+
+            <div class="style-selector">
+                <span class="style-label">Style:</span>
+                <div class="style-pills">
+                    <button class="style-pill active" data-style="default">🏰 DCC Default</button>
+                    <button class="style-pill" data-style="corporate">💼 Corporate</button>
+                    <button class="style-pill" data-style="funny">🤪 Absurd</button>
+                    <button class="style-pill" data-style="nice">💖 Wholesome</button>
+                    <button class="style-pill" data-style="mean">🔥 Brutal</button>
+                    <button class="style-pill" data-style="pirate">🏴‍☠️ Pirate</button>
+                    <button class="style-pill" data-style="shakespeare">📜 Bard</button>
+                </div>
+            </div>
+
+            <div class="examples-section">
+                <h3 class="examples-title">Quick Examples:</h3>
+                <div class="examples-grid">
+                    <button class="example-btn" onclick="setExample('Made coffee this morning')">☕ Made coffee this morning</button>
+                    <button class="example-btn" onclick="setExample('Survived a Zoom meeting')">💻 Survived a Zoom meeting</button>
+                    <button class="example-btn" onclick="setExample('Forgot to save my work')">💾 Forgot to save my work</button>
+                    <button class="example-btn" onclick="setExample('Successfully parallel parked')">🚗 Successfully parallel parked</button>
+                </div>
+            </div>
+
+            <button id="generateBtn" class="generate-btn" onclick="generateAchievements()">
+                ⚔️ Generate Achievements
+            </button>
+        </div>
+
+        <div id="achievementsSection" class="achievements-section" style="display: none;">
+            <h2 class="achievements-title">Your Achievements:</h2>
+            <div id="achievementsList"></div>
+        </div>
+
+        <div id="recentSection" class="recent-section" style="display: none;">
+            <h3 class="recent-title">Recent Achievements:</h3>
+            <div id="recentList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let selectedStyle = 'default';
+
+        // Style pill selection
+        document.querySelectorAll('.style-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.style-pill').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedStyle = btn.dataset.style;
+            });
+        });
+
+        function setExample(text) {
+            document.getElementById('activityInput').value = text;
+            document.getElementById('activityInput').focus();
+        }
+
+        const loadingMessages = [
+            '🎲 The AI is rendering judgment on your feats...',
+            '⚔️ The digital oracle contemplates your deeds...',
+            '🏆 Achievement algorithms are evaluating your worth...',
+            '🎯 The cosmic scoreboard is updating...',
+            '⭐ Quantifying your questionable life choices...',
+            '🔮 The AI overlord is amused by your activities...',
+            '🎪 Processing your magnificent absurdity...',
+            '⚡ Converting mundane actions into glory...',
+        ];
+
+        async function generateAchievements() {
+            const input = document.getElementById('activityInput').value.trim();
+            if (!input) {
+                alert('Please enter an activity first!');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            const achievementsSection = document.getElementById('achievementsSection');
+            const achievementsList = document.getElementById('achievementsList');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating...';
+            achievementsSection.style.display = 'block';
+
+            const msg = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+            achievementsList.innerHTML = `<div class="loading">${msg}</div>`;
+
+            try {
+                const response = await fetch(`${API_BASE}/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ activity: input, style: selectedStyle }),
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+                const data = await response.json();
+                displayAchievements(data.achievements);
+                saveToRecent(input, data.achievements, selectedStyle);
+                loadRecent();
+
+                achievementsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch (error) {
+                console.error('Error generating achievements:', error);
+                achievementsList.innerHTML = `
+                    <div class="error">
+                        ⚠️ Failed to generate achievements: ${error.message}<br>
+                        Please try again in a moment.
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '⚔️ Generate Achievements';
+            }
+        }
+
+        function displayAchievements(achievements) {
+            const achievementsList = document.getElementById('achievementsList');
+            achievementsList.innerHTML = achievements.map((achievement, index) => {
+                const { formattedText, copyText } = formatAchievement(achievement);
+                const escapedCopy = escapeAttr(copyText);
+                return `
+                    <div class="achievement" onclick="copyToClipboard('${escapedCopy}', 'main-${index}')">
+                        <div class="achievement-actions">
+                            <button class="copy-btn" id="copy-main-${index}" onclick="event.stopPropagation(); copyToClipboard('${escapedCopy}', 'main-${index}')">
+                                📋 Copy
+                            </button>
+                            <button class="copy-btn" onclick="event.stopPropagation(); copyAsImage(${index})">
+                                🖼️ Image
+                            </button>
+                        </div>
+                        <div class="achievement-text">${formattedText}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatAchievement(achievement) {
+            if (typeof achievement === 'string') {
+                return { formattedText: escapeHtml(achievement), copyText: achievement };
+            }
+            const formattedText = `
+                <div style="font-weight: bold; color: #ffd700; margin-bottom: 10px; font-size: 1.05em; line-height: 1.4;">
+                    ${escapeHtml(achievement.title)}
+                </div>
+                <div style="margin-bottom: 10px; line-height: 1.55; color: #e0e6ed;">
+                    ${escapeHtml(achievement.description)}
+                </div>
+                <div style="color: #a0a6ad; font-style: italic; padding-top: 8px; border-top: 1px solid rgba(255,215,0,0.15); font-size: 0.9em;">
+                    ${escapeHtml(achievement.reward)}
+                </div>
+            `;
+            const copyText = `${achievement.title}\n${achievement.description}\n${achievement.reward}`;
+            return { formattedText, copyText };
+        }
+
+        function copyToClipboard(text, id) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById(`copy-${id}`);
+                if (!btn) return;
+                const orig = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => { btn.textContent = orig; }, 2000);
+            }).catch(() => alert('Failed to copy to clipboard'));
+        }
+
+        async function copyAsImage(index) {
+            const achievements = document.querySelectorAll('.achievement');
+            const achievement = achievements[index];
+            if (!achievement) return;
+
+            const imageBtn = achievement.querySelectorAll('.copy-btn')[1];
+            const originalText = imageBtn ? imageBtn.textContent : '';
+
+            try {
+                if (imageBtn) { imageBtn.textContent = '📸 Creating...'; imageBtn.disabled = true; }
+
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = `
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                    padding: 30px; border-radius: 12px;
+                    font-family: 'Consolas','Monaco','Lucida Console',monospace;
+                    color: #e0e6ed; max-width: 600px;
+                    position: absolute; left: -9999px; top: -9999px;
+                `;
+
+                const clone = achievement.cloneNode(true);
+                clone.querySelectorAll('button').forEach(b => b.remove());
+                clone.style.cssText = `
+                    background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+                    border: 2px solid #ffd700; border-radius: 10px;
+                    padding: 20px; margin: 0; display: block;
+                    box-shadow: 0 4px 20px rgba(255,215,0,0.3);
+                `;
+                wrapper.appendChild(clone);
+
+                const watermark = document.createElement('div');
+                watermark.style.cssText = 'margin-top:14px;text-align:center;color:#a0a6ad;font-size:0.75rem;opacity:0.6;';
+                watermark.textContent = '🏆 Generated by Dungeon Achievements Generator';
+                wrapper.appendChild(watermark);
+
+                document.body.appendChild(wrapper);
+                const canvas = await html2canvas(wrapper, {
+                    backgroundColor: null, scale: 2, logging: false,
+                    allowTaint: true, useCORS: true,
+                });
+                document.body.removeChild(wrapper);
+
+                canvas.toBlob(async (blob) => {
+                    try {
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                        if (imageBtn) {
+                            imageBtn.textContent = '✅ Copied!';
+                            setTimeout(() => { imageBtn.textContent = originalText; imageBtn.disabled = false; }, 2500);
+                        }
+                    } catch {
+                        const link = document.createElement('a');
+                        link.download = `achievement-${Date.now()}.png`;
+                        link.href = canvas.toDataURL();
+                        link.click();
+                        if (imageBtn) {
+                            imageBtn.textContent = '📥 Downloaded!';
+                            setTimeout(() => { imageBtn.textContent = originalText; imageBtn.disabled = false; }, 2500);
+                        }
+                    }
+                }, 'image/png');
+
+            } catch (error) {
+                console.error('Error creating image:', error);
+                if (imageBtn) {
+                    imageBtn.textContent = '❌ Failed';
+                    setTimeout(() => { imageBtn.textContent = originalText; imageBtn.disabled = false; }, 2500);
+                }
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            return escapeHtml(text).replace(/'/g, '&#39;');
+        }
+
+        function saveToRecent(activity, achievements, style) {
+            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
+            recent.unshift({ activity, achievements, style, timestamp: new Date().toISOString() });
+            recent.splice(10);
+            localStorage.setItem('recentAchievements', JSON.stringify(recent));
+        }
+
+        function loadRecent() {
+            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
+            const recentSection = document.getElementById('recentSection');
+            const recentList = document.getElementById('recentList');
+
+            if (recent.length === 0) { recentSection.style.display = 'none'; return; }
+
+            recentSection.style.display = 'block';
+            recentList.innerHTML = recent.slice(0, 5).map((entry, ei) => `
+                <div style="margin-bottom:20px;padding:14px;border:1px solid #4a5568;border-radius:8px;background:rgba(0,0,0,0.2);">
+                    <div style="color:#a0a6ad;font-size:0.85rem;margin-bottom:10px;">
+                        "${escapeHtml(entry.activity)}" — ${new Date(entry.timestamp).toLocaleDateString()}
+                        ${entry.style && entry.style !== 'default' ? `<span style="margin-left:6px;color:#ffd70099;">[${entry.style}]</span>` : ''}
+                    </div>
+                    ${entry.achievements.map((ach, ai) => {
+                        const { formattedText, copyText } = formatAchievement(ach);
+                        const escapedCopy = escapeAttr(copyText);
+                        return `
+                            <div class="achievement" style="margin-bottom:8px;animation:none;opacity:1;"
+                                 onclick="copyToClipboard('${escapedCopy}', 'rec-${ei}-${ai}')">
+                                <div class="achievement-actions">
+                                    <button class="copy-btn" id="copy-rec-${ei}-${ai}"
+                                            onclick="event.stopPropagation(); copyToClipboard('${escapedCopy}', 'rec-${ei}-${ai}')">
+                                        📋
+                                    </button>
+                                </div>
+                                <div class="achievement-text" style="font-size:0.88rem;">${formattedText}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadRecent);
+
+        document.getElementById('activityInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                generateAchievements();
+            }
+        });
+    </script>
+</body>
+</html>
