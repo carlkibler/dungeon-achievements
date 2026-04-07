@@ -6,7 +6,6 @@
     <title>Dungeon Achievements Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -47,6 +46,7 @@
             color: #a0a6ad;
             line-height: 1.6;
             margin-bottom: 20px;
+            text-wrap: balance;
         }
 
         .input-section {
@@ -97,21 +97,23 @@
         }
 
         .style-pills {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(4, auto);
+            justify-content: start;
             gap: 8px;
         }
 
         .style-pill {
-            padding: 7px 14px;
+            padding: 6px 10px;
             background: rgba(0,0,0,0.4);
             border: 1px solid #4a5568;
             border-radius: 20px;
             color: #a0a6ad;
             font-family: inherit;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             cursor: pointer;
             transition: all 0.2s ease;
+            white-space: nowrap;
         }
 
         .style-pill:hover {
@@ -129,6 +131,10 @@
         .examples-section {
             margin-top: 24px;
             margin-bottom: 0;
+        }
+
+        .examples-section.hidden {
+            display: none;
         }
 
         .examples-title {
@@ -240,7 +246,8 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
-            min-width: 75px;
+            width: 100px;
+            flex-shrink: 0;
         }
 
         .copy-btn {
@@ -254,7 +261,7 @@
             transition: background 0.2s ease, border-color 0.2s ease;
             white-space: nowrap;
             font-family: inherit;
-            width: 72px;
+            width: 100%;
             text-align: center;
             display: block;
         }
@@ -268,8 +275,46 @@
             text-align: center;
             color: #ffd700;
             font-size: 1rem;
-            padding: 30px;
             line-height: 2;
+            position: relative;
+            min-height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .loading-fx {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .loading-msg {
+            position: relative;
+            z-index: 2;
+            display: inline-block;
+            max-width: 80%;
+            animation: oraclePulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes oraclePulse {
+            0%, 100% { opacity: 1; text-shadow: 0 0 8px rgba(255,215,0,0.4); }
+            50% { opacity: 0.6; text-shadow: 0 0 20px rgba(255,215,0,0.9); }
+        }
+
+        @keyframes fxFadeInOut {
+            0%   { opacity: 0; transform: scale(0.4) rotate(0deg); }
+            35%  { opacity: 1; transform: scale(1) rotate(120deg); }
+            100% { opacity: 0; transform: scale(0.2) rotate(360deg); }
+        }
+
+        @keyframes fxRuneFloat {
+            0%   { opacity: 0; transform: translateY(0) rotate(-10deg); }
+            20%  { opacity: 0.9; }
+            80%  { opacity: 0.7; }
+            100% { opacity: 0; transform: translateY(-28px) rotate(10deg); }
         }
 
         .error {
@@ -311,8 +356,7 @@
         <header class="header">
             <h1 class="title">🏆 Dungeon Achievements 🏆</h1>
             <p class="subtitle">
-                Generate amusing fake achievements in the style of the trolling AI from "Dungeon Crawler Carl"!<br>
-                Enter any activity below and receive three wickedly creative achievements.
+                The System is watching. Your deeds — heroic, mundane, or deeply questionable — are being logged. Describe what you did. Receive the achievements you deserve.
             </p>
         </header>
 
@@ -337,7 +381,7 @@
                 </div>
             </div>
 
-            <div class="examples-section">
+            <div class="examples-section hidden">
                 <h3 class="examples-title">Quick Examples:</h3>
                 <div class="examples-grid">
                     <button class="example-btn" onclick="setExample('Made coffee this morning')">☕ Made coffee this morning</button>
@@ -366,6 +410,8 @@
     <script>
         const API_BASE = window.location.origin;
         let selectedStyle = 'default';
+        let currentAchievements = [];
+        let recentAchievements = [];
 
         // Style pill selection
         document.querySelectorAll('.style-pill').forEach(btn => {
@@ -382,15 +428,366 @@
         }
 
         const loadingMessages = [
-            '🎲 The AI is rendering judgment on your feats...',
-            '⚔️ The digital oracle contemplates your deeds...',
-            '🏆 Achievement algorithms are evaluating your worth...',
-            '🎯 The cosmic scoreboard is updating...',
-            '⭐ Quantifying your questionable life choices...',
-            '🔮 The AI overlord is amused by your activities...',
-            '🎪 Processing your magnificent absurdity...',
-            '⚡ Converting mundane actions into glory...',
+            '🔮 The Oracle stirs. It is reviewing your permanent record.',
+            '📜 Cross-referencing your deed against the Hall of Mediocrity...',
+            '👁️ The System sees you. It is not impressed. Yet.',
+            '⚙️ Converting your questionable choices into digital glory...',
+            '🎲 Rolling for cosmic judgment. The dice are judging you.',
+            '🧮 Calculating the exact magnitude of your achievement...',
+            '🌀 Translating mundane existence into epic terminology...',
+            '⚡ The AI is being brutally honest. This may take a moment.',
+            '🔭 Locating your deed in the Grand Ledger of Human Effort...',
+            '🏺 The Oracle has seen worse. Probably.',
+            '💀 Consulting the ancient achievement scrolls...',
+            '🎯 Precision-targeting your ego. Stand by.',
+            '🗂️ Accessing your file. Oh. Oh no. Accessing anyway.',
+            '📊 Question: Has anyone done this before? Answer: Yes. It did not end well.',
+            '⏳ The System is briefly distracted by something more interesting in Sector 7.',
+            '🌑 Initiating the Judgment Subroutines. This takes careful consideration.',
+            '☠️ Cross-referencing this against your 847 previous disappointments...',
+            '👁️ The All-Seeing Eye is buffering. Please hold.',
+            '🎪 Locating the least flattering interpretation of what you just did...',
+            '💫 The Oracle is reviewing your permanent record. It has opinions.',
+            '🩻 Performing a full spiritual X-ray. Results: concerning.',
+            '🔬 Analyzing the precise cocktail of hubris and optimism required to attempt this.',
+            '📡 Signal received. Evaluating whether you deserve acknowledgment. Jury is out.',
+            '⚗️ Distilling your mediocrity into something approaching achievement...',
+            '🌀 The dungeon AI has seen empires fall. It will judge your thing too.',
+            '🕯️ Consulting with previous crawlers who also did this. They said: yikes.',
+            '🧿 Peering into the temporal stream to see how this usually turns out. Loading...',
         ];
+
+        // ===== LOADING EFFECTS =====
+        let activeEffect = null;
+
+        function stopEffect() {
+            if (activeEffect) { activeEffect(); activeEffect = null; }
+        }
+
+        // Effect: Gold sparkle stars
+        function fxSparkles(el) {
+            const symbols = ['✦','✧','⊹','✺','✹','⋆','˚','·','✼','❋'];
+            const created = [];
+            const iv = setInterval(() => {
+                for (let i = 0; i < Math.floor(Math.random() * 3) + 1; i++) {
+                    const s = document.createElement('span');
+                    s.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                    const size = Math.random() * 20 + 7;
+                    const dur = (Math.random() * 1.4 + 0.9).toFixed(2);
+                    const hue = Math.random() * 55 + 25;
+                    s.style.cssText = `position:absolute;left:${(Math.random()*86+4).toFixed(1)}%;` +
+                        `top:${(Math.random()*72+8).toFixed(1)}%;font-size:${size}px;` +
+                        `color:hsl(${hue},100%,${(Math.random()*25+60).toFixed()}%);` +
+                        `text-shadow:0 0 ${(size/2).toFixed()}px hsl(${hue},100%,80%);` +
+                        `pointer-events:none;animation:fxFadeInOut ${dur}s ease-in-out forwards;`;
+                    el.appendChild(s);
+                    created.push(s);
+                    setTimeout(() => s.remove(), parseFloat(dur) * 1000 + 100);
+                }
+            }, 160);
+            return () => { clearInterval(iv); created.forEach(e => e.remove()); };
+        }
+
+        // Effect: Spectral canvas tendrils
+        function fxTendrils(el) {
+            const cv = document.createElement('canvas');
+            cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+            el.appendChild(cv);
+            let W = cv.width = el.offsetWidth, H = cv.height = el.offsetHeight;
+            const ctx = cv.getContext('2d');
+            const lines = [];
+            const addLine = () => {
+                const sy = Math.random() * H;
+                lines.push({
+                    x0: -10, y0: sy,
+                    cx1: W*.25 + Math.random()*W*.2, cy1: sy + (Math.random()-.5)*H*.7,
+                    cx2: W*.55 + Math.random()*W*.2, cy2: sy + (Math.random()-.5)*H*.7,
+                    x1: W+10, y1: Math.random()*H,
+                    t: 0, spd: 0.003 + Math.random()*0.004,
+                    hue: Math.random() > .5 ? 195+Math.random()*40 : 275+Math.random()*40,
+                });
+            };
+            addLine();
+            const spawnIv = setInterval(addLine, 700);
+            let raf;
+            const draw = () => {
+                ctx.clearRect(0, 0, W, H);
+                for (let i = lines.length-1; i >= 0; i--) {
+                    const l = lines[i];
+                    l.t = Math.min(l.t + l.spd, 1);
+                    const alpha = l.t < .5 ? l.t*2 : (1-l.t)*2;
+                    ctx.beginPath();
+                    for (let s = 0; s <= 40*l.t; s++) {
+                        const p = s/40;
+                        const bx = (1-p)**3*l.x0 + 3*(1-p)**2*p*l.cx1 + 3*(1-p)*p*p*l.cx2 + p**3*l.x1;
+                        const by = (1-p)**3*l.y0 + 3*(1-p)**2*p*l.cy1 + 3*(1-p)*p*p*l.cy2 + p**3*l.y1;
+                        s === 0 ? ctx.moveTo(bx, by) : ctx.lineTo(bx, by);
+                    }
+                    ctx.strokeStyle = `hsla(${l.hue},100%,75%,${alpha*.7})`;
+                    ctx.lineWidth = 1.5; ctx.shadowColor = `hsl(${l.hue},100%,75%)`; ctx.shadowBlur = 8;
+                    ctx.stroke(); ctx.shadowBlur = 0;
+                    if (l.t >= 1) lines.splice(i, 1);
+                }
+                raf = requestAnimationFrame(draw);
+            };
+            draw();
+            return () => { cancelAnimationFrame(raf); clearInterval(spawnIv); cv.remove(); };
+        }
+
+        // Effect: Smoke wisps
+        function fxSmoke(el) {
+            const cv = document.createElement('canvas');
+            cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+            el.appendChild(cv);
+            let W = cv.width = el.offsetWidth, H = cv.height = el.offsetHeight;
+            const ctx = cv.getContext('2d');
+            const pts = [];
+            const spawnIv = setInterval(() => {
+                for (let i=0;i<2;i++) pts.push({
+                    x: W*.15 + Math.random()*W*.7, y: H+10,
+                    vx: (Math.random()-.5)*.9, vy: -(Math.random()*1.1+.4),
+                    r: Math.random()*16+8, a: Math.random()*.22+.08,
+                    hue: Math.random() > .5 ? 195 : 260,
+                });
+            }, 220);
+            let raf;
+            const draw = () => {
+                ctx.clearRect(0, 0, W, H);
+                for (let i = pts.length-1; i >= 0; i--) {
+                    const p = pts[i];
+                    p.x += p.vx; p.y += p.vy; p.r += .25; p.a -= .0025;
+                    if (p.a <= 0 || p.y < -p.r) { pts.splice(i,1); continue; }
+                    const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+                    g.addColorStop(0, `hsla(${p.hue},55%,80%,${p.a})`);
+                    g.addColorStop(1, `hsla(${p.hue},55%,80%,0)`);
+                    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+                    ctx.fillStyle = g; ctx.fill();
+                }
+                raf = requestAnimationFrame(draw);
+            };
+            draw();
+            return () => { cancelAnimationFrame(raf); clearInterval(spawnIv); cv.remove(); };
+        }
+
+        // Effect: Floating runes
+        function fxRunes(el) {
+            const runes = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚾ','ᛁ','ᛇ','ᛈ','ᛉ','ᛋ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛟ','☽','⊛','◈','⧫','⁂','꩜'];
+            const created = [];
+            const iv = setInterval(() => {
+                const s = document.createElement('span');
+                s.textContent = runes[Math.floor(Math.random()*runes.length)];
+                const size = Math.random()*16+10;
+                const hue = Math.random()*80+180;
+                const dur = (Math.random()*1.8+1.2).toFixed(2);
+                s.style.cssText = `position:absolute;left:${(Math.random()*84+5).toFixed(1)}%;` +
+                    `top:${(Math.random()*65+12).toFixed(1)}%;font-size:${size}px;` +
+                    `color:hsl(${hue},100%,72%);text-shadow:0 0 12px hsl(${hue},100%,72%);` +
+                    `pointer-events:none;animation:fxRuneFloat ${dur}s ease-in-out forwards;`;
+                el.appendChild(s);
+                created.push(s);
+                setTimeout(() => s.remove(), parseFloat(dur)*1000+100);
+            }, 280);
+            return () => { clearInterval(iv); created.forEach(e => e.remove()); };
+        }
+
+        // Effect: Lightning arcs
+        function fxLightning(el) {
+            const cv = document.createElement('canvas');
+            cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+            el.appendChild(cv);
+            let W = cv.width = el.offsetWidth, H = cv.height = el.offsetHeight;
+            const ctx = cv.getContext('2d');
+
+            function bolt(x1, y1, x2, y2, spread, depth) {
+                if (depth <= 0) { ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); return; }
+                const mx = (x1+x2)/2 + (Math.random()-.5)*spread;
+                const my = (y1+y2)/2 + (Math.random()-.5)*spread;
+                bolt(x1,y1,mx,my,spread/2,depth-1);
+                bolt(mx,my,x2,y2,spread/2,depth-1);
+                if (Math.random() < 0.3) bolt(mx,my,mx+(Math.random()-.5)*spread*2,my+(Math.random()-.5)*spread*2,spread/2,depth-2);
+            }
+
+            let raf;
+            function flash() {
+                ctx.clearRect(0,0,W,H);
+                const n = Math.floor(Math.random()*2)+1;
+                for (let i=0;i<n;i++) {
+                    const x1=Math.random()*W, y1=0, x2=x1+(Math.random()-.5)*W*.6, y2=H;
+                    const hue = Math.random()>.5 ? 200 : 55;
+                    ctx.beginPath();
+                    bolt(x1,y1,x2,y2,60,5);
+                    ctx.strokeStyle = `hsla(${hue},100%,85%,0.9)`;
+                    ctx.lineWidth = 1; ctx.shadowColor = `hsl(${hue},100%,75%)`; ctx.shadowBlur = 12;
+                    ctx.stroke(); ctx.shadowBlur = 0;
+                }
+                // Fade out
+                let alpha = 1;
+                const fade = () => {
+                    alpha -= 0.08;
+                    if (alpha <= 0) { ctx.clearRect(0,0,W,H); setTimeout(flash, Math.random()*1200+400); return; }
+                    ctx.globalAlpha = alpha;
+                    raf = requestAnimationFrame(fade);
+                };
+                ctx.globalAlpha = 1;
+                setTimeout(fade, 80);
+            }
+            flash();
+            return () => { cancelAnimationFrame(raf); cv.remove(); };
+        }
+
+        // Effect: Ember rain
+        function fxEmbers(el) {
+            const cv = document.createElement('canvas');
+            cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+            el.appendChild(cv);
+            let W = cv.width = el.offsetWidth, H = cv.height = el.offsetHeight;
+            const ctx = cv.getContext('2d');
+            const pts = [];
+            const spawnIv = setInterval(() => {
+                for (let i=0;i<3;i++) pts.push({
+                    x: Math.random()*W, y: -8,
+                    vx: (Math.random()-.5)*1.2, vy: Math.random()*2+1,
+                    r: Math.random()*3+1.5,
+                    hue: Math.random()*40+15, // orange-gold
+                    a: Math.random()*.7+.3,
+                });
+            }, 120);
+            let raf;
+            const draw = () => {
+                ctx.clearRect(0,0,W,H);
+                for (let i=pts.length-1;i>=0;i--) {
+                    const p=pts[i];
+                    p.x+=p.vx; p.y+=p.vy; p.vx+=(Math.random()-.5)*.15;
+                    p.a-=0.007;
+                    if (p.a<=0||p.y>H+8) { pts.splice(i,1); continue; }
+                    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+                    ctx.fillStyle=`hsla(${p.hue},100%,70%,${p.a})`;
+                    ctx.shadowColor=`hsl(${p.hue},100%,70%)`; ctx.shadowBlur=6;
+                    ctx.fill(); ctx.shadowBlur=0;
+                }
+                raf=requestAnimationFrame(draw);
+            };
+            draw();
+            return () => { cancelAnimationFrame(raf); clearInterval(spawnIv); cv.remove(); };
+        }
+
+        // Effect: Constellation
+        function fxConstellation(el) {
+            const cv = document.createElement('canvas');
+            cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+            el.appendChild(cv);
+            let W = cv.width = el.offsetWidth, H = cv.height = el.offsetHeight;
+            const ctx = cv.getContext('2d');
+            const stars = Array.from({length:14}, () => ({
+                x: Math.random()*W, y: Math.random()*H,
+                vx: (Math.random()-.5)*.18, vy: (Math.random()-.5)*.18,
+                r: Math.random()*2.5+1,
+                phase: Math.random()*Math.PI*2,
+            }));
+            let t=0, raf;
+            const draw = () => {
+                ctx.clearRect(0,0,W,H);
+                t+=0.025;
+                // Draw connecting lines for nearby pairs
+                for (let i=0;i<stars.length;i++) {
+                    for (let j=i+1;j<stars.length;j++) {
+                        const dx=stars[i].x-stars[j].x, dy=stars[i].y-stars[j].y;
+                        const dist=Math.sqrt(dx*dx+dy*dy);
+                        if (dist<W*.28) {
+                            const a=(1-dist/(W*.28))*.35;
+                            ctx.beginPath(); ctx.moveTo(stars[i].x,stars[i].y); ctx.lineTo(stars[j].x,stars[j].y);
+                            ctx.strokeStyle=`rgba(180,160,255,${a})`; ctx.lineWidth=.8; ctx.stroke();
+                        }
+                    }
+                }
+                // Draw stars
+                stars.forEach(s => {
+                    s.x+=s.vx; s.y+=s.vy;
+                    if (s.x<0||s.x>W) s.vx*=-1;
+                    if (s.y<0||s.y>H) s.vy*=-1;
+                    const pulse = .5+.5*Math.sin(t*2+s.phase);
+                    ctx.beginPath(); ctx.arc(s.x,s.y,s.r*(0.7+0.3*pulse),0,Math.PI*2);
+                    ctx.fillStyle=`rgba(220,200,255,${0.6+0.4*pulse})`;
+                    ctx.shadowColor='rgba(180,160,255,1)'; ctx.shadowBlur=8*pulse;
+                    ctx.fill(); ctx.shadowBlur=0;
+                });
+                raf=requestAnimationFrame(draw);
+            };
+            draw();
+            return () => { cancelAnimationFrame(raf); cv.remove(); };
+        }
+
+        // Effect: Expanding ripples
+        function fxRipples(el) {
+            const cv = document.createElement('canvas');
+            cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+            el.appendChild(cv);
+            let W = cv.width = el.offsetWidth, H = cv.height = el.offsetHeight;
+            const ctx = cv.getContext('2d');
+            const rings = [];
+            const spawnIv = setInterval(() => {
+                rings.push({
+                    x: W*.1+Math.random()*W*.8, y: H*.1+Math.random()*H*.8,
+                    r: 0, maxR: Math.random()*80+40,
+                    hue: Math.random()>0.5 ? 45 : 185,
+                    a: 0.7,
+                });
+            }, 500);
+            let raf;
+            const draw = () => {
+                ctx.clearRect(0,0,W,H);
+                for (let i=rings.length-1;i>=0;i--) {
+                    const rg=rings[i];
+                    rg.r+=2.2; rg.a-=0.014;
+                    if (rg.a<=0) { rings.splice(i,1); continue; }
+                    ctx.beginPath(); ctx.arc(rg.x,rg.y,rg.r,0,Math.PI*2);
+                    ctx.strokeStyle=`hsla(${rg.hue},100%,70%,${rg.a})`;
+                    ctx.lineWidth=1.5; ctx.shadowColor=`hsl(${rg.hue},100%,70%)`; ctx.shadowBlur=8;
+                    ctx.stroke(); ctx.shadowBlur=0;
+                }
+                raf=requestAnimationFrame(draw);
+            };
+            draw();
+            return () => { cancelAnimationFrame(raf); clearInterval(spawnIv); cv.remove(); };
+        }
+
+        // Effect: Ghost orbs
+        function fxOrbs(el) {
+            const cv = document.createElement('canvas');
+            cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+            el.appendChild(cv);
+            let W = cv.width = el.offsetWidth, H = cv.height = el.offsetHeight;
+            const ctx = cv.getContext('2d');
+            const orbs = Array.from({length:5}, () => ({
+                x: Math.random()*W, y: Math.random()*H,
+                r: Math.random()*28+18,
+                hue: [195,270,300,45,160][Math.floor(Math.random()*5)],
+                ox: Math.random()*W, oy: Math.random()*H,
+                ax: (Math.random()-.5)*W*.6, ay: (Math.random()-.5)*H*.6,
+                spd: Math.random()*.6+.4, phase: Math.random()*Math.PI*2,
+            }));
+            let t=0, raf;
+            const draw = () => {
+                ctx.clearRect(0,0,W,H);
+                t+=0.012;
+                orbs.forEach(o => {
+                    o.x = o.ox + o.ax*Math.sin(t*o.spd+o.phase);
+                    o.y = o.oy + o.ay*Math.cos(t*o.spd*0.7+o.phase);
+                    const g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r);
+                    const pulse=0.12+0.08*Math.sin(t*2+o.phase);
+                    g.addColorStop(0,`hsla(${o.hue},80%,85%,${pulse*2.5})`);
+                    g.addColorStop(0.4,`hsla(${o.hue},80%,70%,${pulse})`);
+                    g.addColorStop(1,`hsla(${o.hue},80%,70%,0)`);
+                    ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
+                    ctx.fillStyle=g; ctx.fill();
+                });
+                raf=requestAnimationFrame(draw);
+            };
+            draw();
+            return () => { cancelAnimationFrame(raf); cv.remove(); };
+        }
+
+        const FX = [fxSparkles, fxTendrils, fxSmoke, fxRunes, fxLightning, fxEmbers, fxConstellation, fxRipples, fxOrbs];
 
         async function generateAchievements() {
             const input = document.getElementById('activityInput').value.trim();
@@ -403,12 +800,35 @@
             const achievementsSection = document.getElementById('achievementsSection');
             const achievementsList = document.getElementById('achievementsList');
 
+            // Scroll "What did you do?" to top of viewport
+            const inputLabel = document.querySelector('.input-label');
+            const labelTop = inputLabel.getBoundingClientRect().top + window.scrollY - 20;
+            window.scrollTo({ top: labelTop, behavior: 'smooth' });
+
             btn.disabled = true;
-            btn.textContent = '⏳ Generating...';
+            btn.textContent = '⏳ Summoning...';
             achievementsSection.style.display = 'block';
 
-            const msg = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
-            achievementsList.innerHTML = `<div class="loading">${msg}</div>`;
+            // Shuffle messages so we don't start from the same spot
+            let msgIndex = Math.floor(Math.random() * loadingMessages.length);
+            achievementsList.innerHTML = `<div class="loading"><div class="loading-fx" id="loadingFx"></div><span class="loading-msg">${loadingMessages[msgIndex]}</span></div>`;
+
+            // Start a random visual effect
+            stopEffect();
+            const fxEl = document.getElementById('loadingFx');
+            if (fxEl) activeEffect = FX[Math.floor(Math.random() * FX.length)](fxEl);
+
+            const msgInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % loadingMessages.length;
+                const el = achievementsList.querySelector('.loading-msg');
+                if (el) {
+                    el.style.transition = 'opacity 0.3s';
+                    el.style.opacity = '0';
+                    setTimeout(() => {
+                        if (el) { el.textContent = loadingMessages[msgIndex]; el.style.opacity = '1'; }
+                    }, 300);
+                }
+            }, 2200);
 
             try {
                 const response = await fetch(`${API_BASE}/generate`, {
@@ -420,6 +840,8 @@
                 if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
                 const data = await response.json();
+                clearInterval(msgInterval);
+                stopEffect();
                 displayAchievements(data.achievements);
                 saveToRecent(input, data.achievements, selectedStyle);
                 loadRecent();
@@ -427,6 +849,8 @@
                 achievementsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             } catch (error) {
+                clearInterval(msgInterval);
+                stopEffect();
                 console.error('Error generating achievements:', error);
                 achievementsList.innerHTML = `
                     <div class="error">
@@ -441,18 +865,21 @@
         }
 
         function displayAchievements(achievements) {
+            currentAchievements = achievements;
             const achievementsList = document.getElementById('achievementsList');
             achievementsList.innerHTML = achievements.map((achievement, index) => {
-                const { formattedText, copyText } = formatAchievement(achievement);
-                const escapedCopy = escapeAttr(copyText);
+                const { formattedText } = formatAchievement(achievement);
                 return `
-                    <div class="achievement" onclick="copyToClipboard('${escapedCopy}', 'main-${index}')">
+                    <div class="achievement" data-index="${index}" data-scope="main">
                         <div class="achievement-actions">
-                            <button class="copy-btn" id="copy-main-${index}" onclick="event.stopPropagation(); copyToClipboard('${escapedCopy}', 'main-${index}')">
+                            <button class="copy-btn" id="copy-main-${index}" data-action="copy" data-index="${index}" data-scope="main">
                                 📋 Copy
                             </button>
-                            <button class="copy-btn" onclick="event.stopPropagation(); copyAsImage(${index})">
+                            <button class="copy-btn" data-action="image" data-index="${index}">
                                 🖼️ Image
+                            </button>
+                            <button class="copy-btn" data-action="download" data-index="${index}">
+                                💾 Save
                             </button>
                         </div>
                         <div class="achievement-text">${formattedText}</div>
@@ -480,82 +907,253 @@
             return { formattedText, copyText };
         }
 
-        function copyToClipboard(text, id) {
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = document.getElementById(`copy-${id}`);
-                if (!btn) return;
-                const orig = btn.textContent;
-                btn.textContent = '✅ Copied!';
-                setTimeout(() => { btn.textContent = orig; }, 2000);
-            }).catch(() => alert('Failed to copy to clipboard'));
+        function getCopyContent(index, scope) {
+            const ach = scope === 'recent'
+                ? recentAchievements[index]
+                : currentAchievements[index];
+            if (!ach) return null;
+            if (typeof ach === 'string') return { text: ach, html: escapeHtml(ach) };
+            const text = `*New achievement! ${ach.title}*\n${ach.description}\n${ach.reward}`;
+            const html = `<p><em>New achievement! ${escapeHtml(ach.title)}</em></p>`
+                + `<p>${escapeHtml(ach.description)}</p>`
+                + `<p>${escapeHtml(ach.reward)}</p>`;
+            return { text, html };
         }
 
-        async function copyAsImage(index) {
-            const achievements = document.querySelectorAll('.achievement');
-            const achievement = achievements[index];
-            if (!achievement) return;
+        async function copyToClipboard(btn, text, htmlContent) {
+            const orig = btn.textContent;
+            const done = () => {
+                btn.textContent = '✅ Done!';
+                setTimeout(() => { btn.textContent = orig; }, 2000);
+            };
 
-            const imageBtn = achievement.querySelectorAll('.copy-btn')[1];
-            const originalText = imageBtn ? imageBtn.textContent : '';
+            // Preferred: clipboard.write with both HTML and plain text independently.
+            // HTML pastes rich in Word/Docs/email; plain text carries markdown for Discord/Slack.
+            if (window.ClipboardItem && navigator.clipboard?.write) {
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({
+                        'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                        'text/plain': new Blob([text], { type: 'text/plain' }),
+                    })]);
+                    done();
+                    return;
+                } catch {}
+            }
+
+            // Fallback: contenteditable + execCommand (Safari)
+            const div = document.createElement('div');
+            div.contentEditable = 'true';
+            div.innerHTML = htmlContent || text.replace(/\n/g, '<br>');
+            div.style.cssText = 'position:fixed;opacity:0;top:0;left:0;pointer-events:none;';
+            document.body.appendChild(div);
+            const sel = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(div);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch {}
+            document.body.removeChild(div);
+            sel.removeAllRanges();
+
+            if (ok) { done(); return; }
+
+            navigator.clipboard?.writeText(text).then(done).catch(() => {
+                alert('Copy not supported in this browser');
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) {
+                const row = e.target.closest('.achievement[data-scope]');
+                if (!row) return;
+                const copyBtn = row.querySelector('[data-action="copy"]');
+                if (!copyBtn) return;
+                const content = getCopyContent(+row.dataset.index, row.dataset.scope);
+                if (content) copyToClipboard(copyBtn, content.text, content.html);
+                return;
+            }
+            e.stopPropagation();
+            const { action, index, scope } = btn.dataset;
+            if (action === 'copy') {
+                const content = getCopyContent(+index, scope);
+                if (content) copyToClipboard(btn, content.text, content.html);
+            } else if (action === 'image') {
+                copyAsImage(+index, scope);
+            } else if (action === 'download') {
+                downloadImage(btn, +index);
+            }
+        });
+
+        function drawAchievementCanvas(ach) {
+            const scale = 2;
+            const W = 600, pad = 32, inner = W - pad * 2;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const title = typeof ach === 'string' ? ach : (ach?.title ?? '');
+            const description = typeof ach === 'string' ? '' : (ach?.description ?? '');
+            const reward = typeof ach === 'string' ? '' : (ach?.reward ?? '');
+
+            const FONT = "14px Consolas, Monaco, 'Lucida Console', monospace";
+            const FONT_TITLE = "bold 15px Consolas, Monaco, 'Lucida Console', monospace";
+            const FONT_SMALL = "13px Consolas, Monaco, 'Lucida Console', monospace";
+            const LINE = 22;
+
+            // Measure text for height calculation
+            ctx.font = FONT_TITLE;
+            const titleLines = wrapText(ctx, title, inner);
+            ctx.font = FONT;
+            const descLines = wrapText(ctx, description, inner);
+            ctx.font = FONT_SMALL;
+            const rewardLines = wrapText(ctx, reward, inner);
+
+            const contentH = titleLines.length * LINE + 14
+                           + descLines.length * LINE + 18
+                           + rewardLines.length * LINE;
+            const totalH = pad + contentH + pad + 28; // 28 for watermark
+
+            canvas.width = W * scale;
+            canvas.height = totalH * scale;
+            ctx.scale(scale, scale);
+
+            // Background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, W, totalH);
+
+            // Card
+            const cardX = pad - 10, cardY = pad - 10;
+            const cardW = inner + 20, cardH = contentH + 20;
+            ctx.beginPath();
+            roundRect(ctx, cardX, cardY, cardW, cardH, 10);
+            ctx.fillStyle = 'rgba(255,215,0,0.07)';
+            ctx.fill();
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // Gold left accent
+            ctx.beginPath();
+            roundRect(ctx, cardX, cardY, 4, cardH, [10, 0, 0, 10]);
+            ctx.fillStyle = '#ffd700';
+            ctx.fill();
+
+            let y = pad + LINE * 0.8;
+
+            // Title
+            ctx.font = FONT_TITLE;
+            ctx.fillStyle = '#ffd700';
+            for (const line of titleLines) { ctx.fillText(line, pad, y); y += LINE; }
+            y += 10;
+
+            // Description
+            ctx.font = FONT;
+            ctx.fillStyle = '#e0e6ed';
+            for (const line of descLines) { ctx.fillText(line, pad, y); y += LINE; }
+            y += 12;
+
+            // Divider
+            ctx.beginPath();
+            ctx.moveTo(pad, y); ctx.lineTo(pad + inner, y);
+            ctx.strokeStyle = 'rgba(255,215,0,0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            y += 14;
+
+            // Reward
+            ctx.font = `italic ${FONT_SMALL}`;
+            ctx.fillStyle = '#a0a6ad';
+            for (const line of rewardLines) { ctx.fillText(line, pad, y); y += LINE; }
+
+            // Watermark
+            ctx.font = '11px Consolas, Monaco, monospace';
+            ctx.fillStyle = 'rgba(160,166,173,0.5)';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏆 achievements.carlkibler.com', W / 2, totalH - 10);
+
+            return canvas;
+        }
+
+        function wrapText(ctx, text, maxWidth) {
+            if (!text) return [''];
+            const words = text.split(' ');
+            const lines = [];
+            let line = '';
+            for (const word of words) {
+                const test = line ? line + ' ' + word : word;
+                if (ctx.measureText(test).width > maxWidth && line) {
+                    lines.push(line);
+                    line = word;
+                } else {
+                    line = test;
+                }
+            }
+            if (line) lines.push(line);
+            return lines;
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            if (typeof r === 'number') r = [r, r, r, r];
+            ctx.moveTo(x + r[0], y);
+            ctx.lineTo(x + w - r[1], y);
+            ctx.arcTo(x + w, y, x + w, y + r[1], r[1]);
+            ctx.lineTo(x + w, y + h - r[2]);
+            ctx.arcTo(x + w, y + h, x + w - r[2], y + h, r[2]);
+            ctx.lineTo(x + r[3], y + h);
+            ctx.arcTo(x, y + h, x, y + h - r[3], r[3]);
+            ctx.lineTo(x, y + r[0]);
+            ctx.arcTo(x, y, x + r[0], y, r[0]);
+            ctx.closePath();
+        }
+
+        function downloadImage(btn, index) {
+            const orig = btn.textContent;
+            const scope = btn.dataset.scope;
+            const ach = scope === 'recent' ? recentAchievements[index] : currentAchievements[index];
+            if (!ach) return;
+            const canvas = drawAchievementCanvas(ach);
+            const link = document.createElement('a');
+            link.download = `achievement-${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            btn.textContent = '✅ Saved!';
+            setTimeout(() => { btn.textContent = orig; }, 2000);
+        }
+
+        async function copyAsImage(index, scope) {
+            const btn = document.querySelector(`[data-action="image"][data-index="${index}"][data-scope="${scope || 'main'}"]`);
+            const originalText = btn?.textContent ?? '';
 
             try {
-                if (imageBtn) { imageBtn.textContent = '📸 Creating...'; imageBtn.disabled = true; }
+                if (btn) { btn.textContent = '📸 ...'; btn.disabled = true; }
 
-                const wrapper = document.createElement('div');
-                wrapper.style.cssText = `
-                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-                    padding: 30px; border-radius: 12px;
-                    font-family: 'Consolas','Monaco','Lucida Console',monospace;
-                    color: #e0e6ed; max-width: 600px;
-                    position: absolute; left: -9999px; top: -9999px;
-                `;
-
-                const clone = achievement.cloneNode(true);
-                clone.querySelectorAll('button').forEach(b => b.remove());
-                clone.style.cssText = `
-                    background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
-                    border: 2px solid #ffd700; border-radius: 10px;
-                    padding: 20px; margin: 0; display: block;
-                    box-shadow: 0 4px 20px rgba(255,215,0,0.3);
-                `;
-                wrapper.appendChild(clone);
-
-                const watermark = document.createElement('div');
-                watermark.style.cssText = 'margin-top:14px;text-align:center;color:#a0a6ad;font-size:0.75rem;opacity:0.6;';
-                watermark.textContent = '🏆 Generated by Dungeon Achievements Generator';
-                wrapper.appendChild(watermark);
-
-                document.body.appendChild(wrapper);
-                const canvas = await html2canvas(wrapper, {
-                    backgroundColor: null, scale: 2, logging: false,
-                    allowTaint: true, useCORS: true,
-                });
-                document.body.removeChild(wrapper);
+                const ach = (scope === 'recent' ? recentAchievements : currentAchievements)[index];
+                const canvas = drawAchievementCanvas(ach);
 
                 canvas.toBlob(async (blob) => {
                     try {
                         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                        if (imageBtn) {
-                            imageBtn.textContent = '✅ Copied!';
-                            setTimeout(() => { imageBtn.textContent = originalText; imageBtn.disabled = false; }, 2500);
+                        if (btn) {
+                            btn.textContent = '✅ Done!';
+                            setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2500);
                         }
                     } catch {
                         const link = document.createElement('a');
                         link.download = `achievement-${Date.now()}.png`;
                         link.href = canvas.toDataURL();
                         link.click();
-                        if (imageBtn) {
-                            imageBtn.textContent = '📥 Downloaded!';
-                            setTimeout(() => { imageBtn.textContent = originalText; imageBtn.disabled = false; }, 2500);
+                        if (btn) {
+                            btn.textContent = '📥 Saved!';
+                            setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2500);
                         }
                     }
                 }, 'image/png');
 
             } catch (error) {
                 console.error('Error creating image:', error);
-                if (imageBtn) {
-                    imageBtn.textContent = '❌ Failed';
-                    setTimeout(() => { imageBtn.textContent = originalText; imageBtn.disabled = false; }, 2500);
+                if (btn) {
+                    btn.textContent = '❌ Error';
+                    setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2500);
                 }
             }
         }
@@ -564,10 +1162,6 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
-        }
-
-        function escapeAttr(text) {
-            return escapeHtml(text).replace(/'/g, '&#39;');
         }
 
         function saveToRecent(activity, achievements, style) {
@@ -584,23 +1178,32 @@
 
             if (recent.length === 0) { recentSection.style.display = 'none'; return; }
 
+            recentAchievements = recent.flatMap(e => e.achievements);
+
             recentSection.style.display = 'block';
-            recentList.innerHTML = recent.slice(0, 5).map((entry, ei) => `
+            let recIdx = 0;
+            recentList.innerHTML = recent.slice(0, 5).map((entry) => `
                 <div style="margin-bottom:20px;padding:14px;border:1px solid #4a5568;border-radius:8px;background:rgba(0,0,0,0.2);">
                     <div style="color:#a0a6ad;font-size:0.85rem;margin-bottom:10px;">
                         "${escapeHtml(entry.activity)}" — ${new Date(entry.timestamp).toLocaleDateString()}
                         ${entry.style && entry.style !== 'default' ? `<span style="margin-left:6px;color:#ffd70099;">[${entry.style}]</span>` : ''}
                     </div>
-                    ${entry.achievements.map((ach, ai) => {
-                        const { formattedText, copyText } = formatAchievement(ach);
-                        const escapedCopy = escapeAttr(copyText);
+                    ${entry.achievements.map((ach) => {
+                        const { formattedText } = formatAchievement(ach);
+                        const idx = recIdx++;
                         return `
                             <div class="achievement" style="margin-bottom:8px;animation:none;opacity:1;"
-                                 onclick="copyToClipboard('${escapedCopy}', 'rec-${ei}-${ai}')">
+                                 data-index="${idx}" data-scope="recent">
                                 <div class="achievement-actions">
-                                    <button class="copy-btn" id="copy-rec-${ei}-${ai}"
-                                            onclick="event.stopPropagation(); copyToClipboard('${escapedCopy}', 'rec-${ei}-${ai}')">
-                                        📋
+                                    <button class="copy-btn" id="copy-recent-${idx}"
+                                            data-action="copy" data-index="${idx}" data-scope="recent">
+                                        📋 Copy
+                                    </button>
+                                    <button class="copy-btn" data-action="image" data-index="${idx}" data-scope="recent">
+                                        🖼️ Image
+                                    </button>
+                                    <button class="copy-btn" data-action="download" data-index="${idx}" data-scope="recent">
+                                        💾 Save
                                     </button>
                                 </div>
                                 <div class="achievement-text" style="font-size:0.88rem;">${formattedText}</div>
@@ -611,7 +1214,13 @@
             `).join('');
         }
 
-        document.addEventListener('DOMContentLoaded', loadRecent);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRecent();
+            // Show examples only for first-time visitors
+            if (!localStorage.getItem('recentAchievements')) {
+                document.querySelector('.examples-section').classList.remove('hidden');
+            }
+        });
 
         document.getElementById('activityInput').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {

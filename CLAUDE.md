@@ -64,6 +64,6 @@ OPENROUTER_MODEL=anthropic/claude-3-5-haiku
 
 ## Deployment
 
-Hosted at https://dungeon-achievements.pages.dev
+Hosted at https://achievements.carlkibler.com (CF Pages: https://dungeon-achievements.pages.dev)
 
 Secrets stored in Cloudflare Pages dashboard (not in wrangler.toml).
