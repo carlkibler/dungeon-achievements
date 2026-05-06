@@ -4,9 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dungeon Achievements Generator</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Fonts: self-hosted — no external CDN requests -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/PressStart2P-Regular.woff2" crossorigin>
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-variable.woff2" crossorigin>
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/cormorant-garamond-latin-400-italic.woff2" crossorigin>
     <style>
+        @font-face {
+            font-family: 'Press Start 2P';
+            src: url('/fonts/PressStart2P-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Outfit Variable';
+            src: url('/fonts/outfit-variable.woff2') format('woff2');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Cormorant Garamond';
+            src: url('/fonts/cormorant-garamond-latin-400-normal.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Cormorant Garamond';
+            src: url('/fonts/cormorant-garamond-latin-400-italic.woff2') format('woff2');
+            font-weight: 400;
+            font-style: italic;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Cormorant Garamond';
+            src: url('/fonts/cormorant-garamond-latin-600-normal.woff2') format('woff2');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* ── Crawler Codex tokens ────────────────────────────────── */
+        :root {
+            --c-bg:           #0b0906;
+            --c-bg-raised:    #100c08;
+            --c-panel:        rgba(20, 14, 9, 0.82);
+            --c-ink:          #f0e8dc;
+            --c-muted:        #b89e8a;
+            --c-muted-soft:   rgba(240, 232, 220, 0.60);
+            --c-line:         rgba(240, 232, 220, 0.10);
+            --c-line-strong:  rgba(240, 232, 220, 0.16);
+            --c-accent:       #9c6644;       /* iron-rust */
+            --c-accent-soft:  #c4845a;       /* phosphor-amber — AI voice */
+            --c-amber:        #e6a674;       /* warm highlight */
+            --c-rivet:        rgba(156, 102, 68, 0.6);  /* rivet dots */
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,9 +68,9 @@
         }
 
         body {
-            font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #e0e6ed;
+            font-family: 'Outfit Variable', 'Avenir Next', 'Segoe UI', sans-serif;
+            background: var(--c-bg);
+            color: var(--c-ink);
             min-height: 100vh;
             padding: 20px;
         }
@@ -33,54 +87,68 @@
 
         .title {
             font-family: 'Press Start 2P', monospace;
-            font-size: 1.6rem;
-            color: #ffd700;
-            text-shadow: 3px 3px 0px rgba(0,0,0,0.8), 0 0 20px rgba(255,215,0,0.3);
+            font-size: 1.4rem;
+            color: var(--c-accent-soft);
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.9), 0 0 24px rgba(196, 132, 90, 0.35);
             margin-bottom: 16px;
-            line-height: 1.5;
+            line-height: 1.6;
             letter-spacing: 1px;
         }
 
         .subtitle {
-            font-size: 1rem;
-            color: #a0a6ad;
-            line-height: 1.6;
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.15rem;
+            font-style: italic;
+            color: var(--c-muted);
+            line-height: 1.65;
             margin-bottom: 20px;
             text-wrap: balance;
         }
 
         .input-section {
-            background: rgba(0,0,0,0.3);
-            border: 2px solid #4a5568;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
+            background: var(--c-panel);
+            border: 1px solid var(--c-line-strong);
+            border-radius: 10px;
+            padding: 28px;
+            margin-bottom: 28px;
+            /* rivet corners */
+            background-image:
+                radial-gradient(circle at 10px 10px, var(--c-rivet) 2.5px, transparent 3px),
+                radial-gradient(circle at calc(100% - 10px) 10px, var(--c-rivet) 2.5px, transparent 3px),
+                radial-gradient(circle at 10px calc(100% - 10px), var(--c-rivet) 2.5px, transparent 3px),
+                radial-gradient(circle at calc(100% - 10px) calc(100% - 10px), var(--c-rivet) 2.5px, transparent 3px);
         }
 
         .input-label {
             display: block;
-            font-size: 1.1rem;
-            color: #ffd700;
-            margin-bottom: 15px;
+            font-size: 0.8rem;
+            color: var(--c-accent-soft);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
         }
 
         .input-field {
             width: 100%;
-            padding: 15px;
+            padding: 14px;
             font-size: 1rem;
-            background: rgba(0,0,0,0.5);
-            border: 2px solid #4a5568;
-            border-radius: 8px;
-            color: #e0e6ed;
-            font-family: inherit;
+            font-family: 'Outfit Variable', sans-serif;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--c-line-strong);
+            border-radius: 6px;
+            color: var(--c-ink);
             resize: vertical;
             min-height: 60px;
         }
 
+        .input-field::placeholder {
+            color: rgba(240, 232, 220, 0.28);
+        }
+
         .input-field:focus {
             outline: none;
-            border-color: #ffd700;
-            box-shadow: 0 0 10px rgba(255,215,0,0.3);
+            border-color: var(--c-accent);
+            box-shadow: 0 0 0 3px rgba(156, 102, 68, 0.25);
         }
 
         .style-selector {
@@ -88,8 +156,8 @@
         }
 
         .style-label {
-            font-size: 0.9rem;
-            color: #a0a6ad;
+            font-size: 0.75rem;
+            color: var(--c-muted);
             margin-bottom: 10px;
             display: block;
             text-transform: uppercase;
@@ -104,12 +172,12 @@
         }
 
         .style-pill {
-            padding: 6px 10px;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid #4a5568;
-            border-radius: 20px;
-            color: #a0a6ad;
-            font-family: inherit;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--c-line-strong);
+            border-radius: 999px;
+            color: var(--c-muted);
+            font-family: 'Outfit Variable', sans-serif;
             font-size: 0.8rem;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -117,15 +185,15 @@
         }
 
         .style-pill:hover {
-            border-color: #ffd700;
-            color: #ffd700;
+            border-color: var(--c-accent);
+            color: var(--c-accent-soft);
         }
 
         .style-pill.active {
-            border-color: #ffd700;
-            color: #ffd700;
-            background: rgba(255,215,0,0.12);
-            box-shadow: 0 0 8px rgba(255,215,0,0.2);
+            border-color: var(--c-accent);
+            color: var(--c-amber);
+            background: rgba(156, 102, 68, 0.15);
+            box-shadow: 0 0 8px rgba(156, 102, 68, 0.2);
         }
 
         .examples-section {
@@ -138,9 +206,11 @@
         }
 
         .examples-title {
-            color: #ffd700;
-            font-size: 1rem;
+            color: var(--c-accent-soft);
+            font-size: 0.9rem;
             margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .examples-grid {
@@ -151,11 +221,11 @@
 
         .example-btn {
             padding: 10px 14px;
-            background: rgba(255,215,0,0.07);
-            border: 1px solid #4a5568;
-            border-radius: 8px;
-            color: #c0c6cd;
-            font-family: inherit;
+            background: rgba(156, 102, 68, 0.06);
+            border: 1px solid var(--c-line-strong);
+            border-radius: 7px;
+            color: var(--c-muted);
+            font-family: 'Outfit Variable', sans-serif;
             font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -163,59 +233,60 @@
         }
 
         .example-btn:hover {
-            border-color: #ffd700;
-            background: rgba(255,215,0,0.15);
-            color: #e0e6ed;
+            border-color: var(--c-accent);
+            background: rgba(156, 102, 68, 0.12);
+            color: var(--c-ink);
         }
 
         .generate-btn {
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            padding: 14px;
+            background: linear-gradient(135deg, #9c6644 0%, #b87548 100%);
             border: none;
-            border-radius: 8px;
-            color: #1a1a2e;
-            font-size: 1.1rem;
-            font-weight: bold;
+            border-radius: 7px;
+            color: #f0e8dc;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Outfit Variable', sans-serif;
+            letter-spacing: 0.5px;
             cursor: pointer;
             transition: all 0.2s ease;
             margin-top: 20px;
-            font-family: inherit;
-            letter-spacing: 0.5px;
         }
 
         .generate-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(255,215,0,0.5);
+            box-shadow: 0 6px 24px rgba(156, 102, 68, 0.45);
         }
 
         .generate-btn:disabled {
-            opacity: 0.6;
+            opacity: 0.55;
             cursor: not-allowed;
         }
 
         .achievements-section {
-            margin-top: 30px;
+            margin-top: 28px;
         }
 
         .achievements-title {
-            color: #ffd700;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
+            color: var(--c-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 18px;
             text-align: center;
         }
 
         @keyframes achievementReveal {
-            from { opacity: 0; transform: translateY(12px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .achievement {
-            background: linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(255,215,0,0.03) 100%);
-            border: 1px solid #4a5568;
-            border-left: 3px solid #ffd700;
+            background: var(--c-panel);
+            border: 1px solid var(--c-line-strong);
             border-radius: 10px;
-            padding: 16px;
+            padding: 18px 16px;
             margin-bottom: 12px;
             display: flex;
             align-items: flex-start;
@@ -223,6 +294,12 @@
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
             opacity: 0;
             animation: achievementReveal 0.4s ease forwards;
+            /* rivet corners */
+            background-image:
+                radial-gradient(circle at 8px 8px, var(--c-rivet) 2px, transparent 3px),
+                radial-gradient(circle at calc(100% - 8px) 8px, var(--c-rivet) 2px, transparent 3px),
+                radial-gradient(circle at 8px calc(100% - 8px), var(--c-rivet) 2px, transparent 3px),
+                radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), var(--c-rivet) 2px, transparent 3px);
         }
 
         .achievement:nth-child(1) { animation-delay: 0.05s; }
@@ -230,13 +307,13 @@
         .achievement:nth-child(3) { animation-delay: 0.35s; }
 
         .achievement:hover {
-            border-color: #ffd700;
-            box-shadow: 0 4px 20px rgba(255,215,0,0.15);
+            border-color: var(--c-accent);
+            box-shadow: 0 4px 20px rgba(156, 102, 68, 0.18);
         }
 
         .achievement-text {
-            font-size: 0.95rem;
-            line-height: 1.6;
+            font-size: 0.97rem;
+            line-height: 1.65;
             flex: 1;
             cursor: pointer;
             word-wrap: break-word;
@@ -246,34 +323,34 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
-            width: 100px;
+            width: 96px;
             flex-shrink: 0;
         }
 
         .copy-btn {
-            padding: 7px 10px;
-            background: rgba(255,215,0,0.12);
-            border: 1px solid #4a5568;
-            border-radius: 6px;
-            color: #ffd700;
-            font-size: 0.8rem;
+            padding: 6px 10px;
+            background: rgba(156, 102, 68, 0.10);
+            border: 1px solid var(--c-line-strong);
+            border-radius: 5px;
+            color: var(--c-accent-soft);
+            font-size: 0.78rem;
             cursor: pointer;
             transition: background 0.2s ease, border-color 0.2s ease;
             white-space: nowrap;
-            font-family: inherit;
+            font-family: 'Outfit Variable', sans-serif;
             width: 100%;
             text-align: center;
             display: block;
         }
 
         .copy-btn:hover {
-            background: rgba(255,215,0,0.25);
-            border-color: #ffd700;
+            background: rgba(156, 102, 68, 0.22);
+            border-color: var(--c-accent);
         }
 
         .loading {
             text-align: center;
-            color: #ffd700;
+            color: var(--c-accent-soft);
             font-size: 1rem;
             line-height: 2;
             position: relative;
@@ -291,18 +368,91 @@
             overflow: hidden;
         }
 
-        .loading-msg {
+        /* Loading console — 3-frame sequence */
+        .loading-console {
             position: relative;
             z-index: 2;
-            display: inline-block;
-            max-width: 80%;
-            animation: oraclePulse 1.8s ease-in-out infinite;
+            width: 100%;
+            max-width: 520px;
+            text-align: left;
+            padding: 0 12px;
+        }
+
+        .loading-echo {
+            font-family: 'SFMono-Regular', 'SF Mono', Consolas, monospace;
+            font-size: 0.82rem;
+            color: var(--c-muted);
+            min-height: 1.4em;
+            letter-spacing: 0.03em;
+        }
+
+        .loading-dossier {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1rem;
+            font-style: italic;
+            color: var(--c-amber);
+            margin-top: 10px;
+            min-height: 1.4em;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            text-shadow: 0 0 8px rgba(230, 166, 116, 0.3);
+        }
+
+        .loading-verdict {
+            font-size: 0.84rem;
+            color: var(--c-muted);
+            margin-top: 12px;
+            min-height: 1.4em;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            animation: oraclePulse 2s ease-in-out infinite;
         }
 
         @keyframes oraclePulse {
-            0%, 100% { opacity: 1; text-shadow: 0 0 8px rgba(255,215,0,0.4); }
-            50% { opacity: 0.6; text-shadow: 0 0 20px rgba(255,215,0,0.9); }
+            0%, 100% { opacity: 1; text-shadow: 0 0 6px rgba(196, 132, 90, 0.35); }
+            50% { opacity: 0.55; text-shadow: 0 0 16px rgba(196, 132, 90, 0.7); }
         }
+
+        /* Skeleton cards — shown while loading */
+        .skeleton-cards {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .skeleton-card {
+            background: rgba(16, 12, 8, 0.6);
+            border: 1px solid var(--c-line);
+            border-radius: 10px;
+            padding: 18px 20px;
+        }
+
+        .skeleton-line {
+            border-radius: 4px;
+            background: rgba(240, 232, 220, 0.06);
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .skeleton-line {
+                background: linear-gradient(90deg,
+                    rgba(240,232,220,0.05) 25%,
+                    rgba(196,132,90,0.12) 50%,
+                    rgba(240,232,220,0.05) 75%);
+                background-size: 200% 100%;
+                animation: skeletonShimmer 1.8s ease-in-out infinite;
+            }
+        }
+
+        @keyframes skeletonShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .sk-title  { height: 13px; width: 55%; margin-bottom: 12px; }
+        .sk-body   { height: 9px;  width: 90%; margin-bottom: 6px; }
+        .sk-body2  { height: 9px;  width: 75%; margin-bottom: 12px; }
+        .sk-reward { height: 8px;  width: 60%; opacity: 0.5; }
 
         @keyframes fxFadeInOut {
             0%   { opacity: 0; transform: scale(0.4) rotate(0deg); }
@@ -318,9 +468,9 @@
         }
 
         .error {
-            background: rgba(220,20,60,0.15);
-            border: 1px solid #dc143c;
-            color: #ffb6c1;
+            background: rgba(220,20,60,0.12);
+            border: 1px solid rgba(220,20,60,0.5);
+            color: #e8a0a0;
             padding: 15px;
             border-radius: 8px;
             margin-top: 20px;
@@ -328,19 +478,21 @@
 
         .recent-section {
             margin-top: 40px;
-            border-top: 1px solid #4a5568;
-            padding-top: 30px;
+            border-top: 1px solid var(--c-line);
+            padding-top: 28px;
         }
 
         .recent-title {
-            color: #a0a6ad;
-            font-size: 1rem;
+            color: var(--c-muted);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
             margin-bottom: 15px;
         }
 
         @media (max-width: 600px) {
             .title {
-                font-size: 1.1rem;
+                font-size: 1rem;
             }
             .input-section {
                 padding: 20px;
@@ -789,6 +941,54 @@
 
         const FX = [fxSparkles, fxTendrils, fxSmoke, fxRunes, fxLightning, fxEmbers, fxConstellation, fxRipples, fxOrbs];
 
+        // ===== LOADING SEQUENCE HELPERS =====
+
+        const DOSSIER_JUDGMENTS = [
+            'Pattern noted.', "We're concerned.", 'Same time next week?',
+            'Still recovering.', 'Expected as much.', 'The file thickens.',
+            'Again.', 'You really are something.', 'Noted. Grimly.',
+            'Honestly? Almost impressed.', 'The record reflects this.',
+            'This is the third time this month.', 'Duly logged.',
+            "Oh. It's you.", 'The Oracle has seen worse. Barely.',
+        ];
+
+        function getDossierLine() {
+            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
+            if (recent.length === 0) return 'First contact. Calibrating contempt levels.';
+            const last = recent[0];
+            const hash = last.activity.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+            const judgment = DOSSIER_JUDGMENTS[hash % DOSSIER_JUDGMENTS.length];
+            return `Last seen: “${last.activity}.” ${judgment}`;
+        }
+
+        function getRecentTitles() {
+            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
+            return recent
+                .flatMap(e => e.achievements)
+                .map(a => (typeof a === 'string' ? a : (a.title || '')).replace(/^[\p{Emoji}\s]+/u, '').trim())
+                .filter(Boolean)
+                .slice(0, 12);
+        }
+
+        async function typewriter(el, text, cps = 90) {
+            el.textContent = '';
+            const msPerChar = 1000 / cps;
+            for (const char of text) {
+                el.textContent += char;
+                await new Promise(r => setTimeout(r, msPerChar));
+            }
+        }
+
+        function skeletonHTML() {
+            const card = `<div class="skeleton-card">
+                <div class="skeleton-line sk-title"></div>
+                <div class="skeleton-line sk-body"></div>
+                <div class="skeleton-line sk-body2"></div>
+                <div class="skeleton-line sk-reward"></div>
+            </div>`;
+            return `<div class="skeleton-cards" id="skeletonCards">${card}${card}${card}</div>`;
+        }
+
         async function generateAchievements() {
             const input = document.getElementById('activityInput').value.trim();
             if (!input) {
@@ -800,7 +1000,6 @@
             const achievementsSection = document.getElementById('achievementsSection');
             const achievementsList = document.getElementById('achievementsList');
 
-            // Scroll "What did you do?" to top of viewport
             const inputLabel = document.querySelector('.input-label');
             const labelTop = inputLabel.getBoundingClientRect().top + window.scrollY - 20;
             window.scrollTo({ top: labelTop, behavior: 'smooth' });
@@ -809,47 +1008,87 @@
             btn.textContent = '⏳ Summoning...';
             achievementsSection.style.display = 'block';
 
-            // Shuffle messages so we don't start from the same spot
-            let msgIndex = Math.floor(Math.random() * loadingMessages.length);
-            achievementsList.innerHTML = `<div class="loading"><div class="loading-fx" id="loadingFx"></div><span class="loading-msg">${loadingMessages[msgIndex]}</span></div>`;
+            // Build loading panel
+            achievementsList.innerHTML = `
+                <div class="loading" id="loadingPanel">
+                    <div class="loading-fx" id="loadingFx"></div>
+                    <div class="loading-console">
+                        <div class="loading-echo" id="loadingEcho"></div>
+                        <div class="loading-dossier" id="loadingDossier"></div>
+                        <div class="loading-verdict" id="loadingVerdict"></div>
+                    </div>
+                </div>
+                ${skeletonHTML()}
+            `;
 
-            // Start a random visual effect
+            // Reveal skeleton cards
+            const skCards = document.getElementById('skeletonCards');
+            if (skCards) skCards.style.display = 'flex';
+
+            // Start visual FX
             stopEffect();
             const fxEl = document.getElementById('loadingFx');
             if (fxEl) activeEffect = FX[Math.floor(Math.random() * FX.length)](fxEl);
 
-            const msgInterval = setInterval(() => {
-                msgIndex = (msgIndex + 1) % loadingMessages.length;
-                const el = achievementsList.querySelector('.loading-msg');
-                if (el) {
-                    el.style.transition = 'opacity 0.3s';
-                    el.style.opacity = '0';
+            // Frame 1: echo-back (character by character)
+            const echoEl = document.getElementById('loadingEcho');
+            if (echoEl) await typewriter(echoEl, `Logging: “${input}”`, 85);
+
+            // Frame 2: dossier flash
+            const dossierEl = document.getElementById('loadingDossier');
+            if (dossierEl) {
+                dossierEl.textContent = getDossierLine();
+                dossierEl.style.opacity = '1';
+            }
+
+            // Frame 3: verdict cycle (3.5s cadence, not 2.2s — slower reads as deliberate)
+            let verdictInterval = null;
+            let msgIndex = Math.floor(Math.random() * loadingMessages.length);
+            const verdictEl = document.getElementById('loadingVerdict');
+
+            const startVerdict = () => {
+                if (!verdictEl) return;
+                verdictEl.textContent = loadingMessages[msgIndex];
+                verdictEl.style.opacity = '1';
+                verdictInterval = setInterval(() => {
+                    msgIndex = (msgIndex + 1) % loadingMessages.length;
+                    verdictEl.style.opacity = '0';
                     setTimeout(() => {
-                        if (el) { el.textContent = loadingMessages[msgIndex]; el.style.opacity = '1'; }
+                        if (verdictEl) { verdictEl.textContent = loadingMessages[msgIndex]; verdictEl.style.opacity = '1'; }
                     }, 300);
-                }
-            }, 2200);
+                }, 3500);
+            };
+            setTimeout(startVerdict, 1500);
+
+            const recentTitles = getRecentTitles();
 
             try {
                 const response = await fetch(`${API_BASE}/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ activity: input, style: selectedStyle }),
+                    body: JSON.stringify({ activity: input, style: selectedStyle, recentTitles }),
                 });
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
                 const data = await response.json();
-                clearInterval(msgInterval);
+                clearInterval(verdictInterval);
                 stopEffect();
+
+                // Briefly surface the mood before clearing — gives a beat of character
+                if (data.mood && dossierEl) {
+                    const moodLabel = data.mood.includes(' — ') ? data.mood.split(' — ')[0] : data.mood.split(',')[0];
+                    dossierEl.textContent = `The AI is feeling: ${moodLabel}`;
+                }
+                await new Promise(r => setTimeout(r, 500));
+
                 displayAchievements(data.achievements);
                 saveToRecent(input, data.achievements, selectedStyle);
                 loadRecent();
-
                 achievementsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             } catch (error) {
-                clearInterval(msgInterval);
+                clearInterval(verdictInterval);
                 stopEffect();
                 console.error('Error generating achievements:', error);
                 achievementsList.innerHTML = `
@@ -893,13 +1132,13 @@
                 return { formattedText: escapeHtml(achievement), copyText: achievement };
             }
             const formattedText = `
-                <div style="font-weight: bold; color: #ffd700; margin-bottom: 10px; font-size: 1.05em; line-height: 1.4;">
+                <div style="font-family:'Cormorant Garamond',Georgia,serif; font-style:italic; font-size:1.2em; line-height:1.3; color:var(--c-amber); margin-bottom:10px; text-shadow:0 0 10px rgba(230,166,116,0.35);">
                     ${escapeHtml(achievement.title)}
                 </div>
-                <div style="margin-bottom: 10px; line-height: 1.55; color: #e0e6ed;">
+                <div style="margin-bottom:10px; line-height:1.65; color:var(--c-ink);">
                     ${escapeHtml(achievement.description)}
                 </div>
-                <div style="color: #a0a6ad; font-style: italic; padding-top: 8px; border-top: 1px solid rgba(255,215,0,0.15); font-size: 0.9em;">
+                <div style="color:var(--c-muted); font-style:italic; padding-top:8px; border-top:1px solid var(--c-line-strong); font-size:0.88em;">
                     ${escapeHtml(achievement.reward)}
                 </div>
             `;
@@ -1019,7 +1258,7 @@
             ctx.scale(scale, scale);
 
             // Background
-            ctx.fillStyle = '#1a1a2e';
+            ctx.fillStyle = '#0b0906';
             ctx.fillRect(0, 0, W, totalH);
 
             // Card
@@ -1027,49 +1266,58 @@
             const cardW = inner + 20, cardH = contentH + 20;
             ctx.beginPath();
             roundRect(ctx, cardX, cardY, cardW, cardH, 10);
-            ctx.fillStyle = 'rgba(255,215,0,0.07)';
+            ctx.fillStyle = 'rgba(20,14,9,0.9)';
             ctx.fill();
-            ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(240,232,220,0.14)';
+            ctx.lineWidth = 1;
             ctx.stroke();
-            // Gold left accent
+            // Iron-rust left accent bar
             ctx.beginPath();
-            roundRect(ctx, cardX, cardY, 4, cardH, [10, 0, 0, 10]);
-            ctx.fillStyle = '#ffd700';
+            roundRect(ctx, cardX, cardY, 3, cardH, [10, 0, 0, 10]);
+            ctx.fillStyle = '#9c6644';
             ctx.fill();
+            // Rivets at card corners
+            const rivetColor = 'rgba(156,102,68,0.55)';
+            [[cardX+7, cardY+7],[cardX+cardW-7, cardY+7],[cardX+7, cardY+cardH-7],[cardX+cardW-7, cardY+cardH-7]].forEach(([rx,ry]) => {
+                ctx.beginPath(); ctx.arc(rx, ry, 2, 0, Math.PI*2);
+                ctx.fillStyle = rivetColor; ctx.fill();
+            });
 
             let y = pad + LINE * 0.8;
 
-            // Title
+            // Title (Cormorant Garamond italic + amber glow)
             ctx.font = FONT_TITLE;
-            ctx.fillStyle = '#ffd700';
+            ctx.fillStyle = '#e6a674';
+            ctx.shadowColor = 'rgba(230,166,116,0.4)';
+            ctx.shadowBlur = 8;
             for (const line of titleLines) { ctx.fillText(line, pad, y); y += LINE; }
+            ctx.shadowBlur = 0;
             y += 10;
 
             // Description
             ctx.font = FONT;
-            ctx.fillStyle = '#e0e6ed';
+            ctx.fillStyle = '#f0e8dc';
             for (const line of descLines) { ctx.fillText(line, pad, y); y += LINE; }
             y += 12;
 
             // Divider
             ctx.beginPath();
             ctx.moveTo(pad, y); ctx.lineTo(pad + inner, y);
-            ctx.strokeStyle = 'rgba(255,215,0,0.2)';
+            ctx.strokeStyle = 'rgba(240,232,220,0.12)';
             ctx.lineWidth = 1;
             ctx.stroke();
             y += 14;
 
             // Reward
             ctx.font = `italic ${FONT_SMALL}`;
-            ctx.fillStyle = '#a0a6ad';
+            ctx.fillStyle = '#b89e8a';
             for (const line of rewardLines) { ctx.fillText(line, pad, y); y += LINE; }
 
             // Watermark
             ctx.font = '11px Consolas, Monaco, monospace';
-            ctx.fillStyle = 'rgba(160,166,173,0.5)';
+            ctx.fillStyle = 'rgba(184,158,138,0.45)';
             ctx.textAlign = 'center';
-            ctx.fillText('🏆 achievements.carlkibler.com', W / 2, totalH - 10);
+            ctx.fillText('⚔ achievements.carlkibler.com', W / 2, totalH - 10);
 
             return canvas;
         }
