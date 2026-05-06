@@ -971,6 +971,20 @@
                 .slice(0, 12);
         }
 
+        function getRecentSnippets() {
+            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
+            return recent
+                .flatMap(e => e.achievements)
+                .map(a => {
+                    if (typeof a === 'string') return null;
+                    const title = (a.title || '').replace(/^[\p{Emoji}\s]+/u, '').trim();
+                    const firstSentence = (a.description || '').split(/[.!?]/)[0].trim().slice(0, 80);
+                    return title && firstSentence ? `${title} — ${firstSentence}` : null;
+                })
+                .filter(Boolean)
+                .slice(0, 6);
+        }
+
         async function typewriter(el, text, cps = 90) {
             el.textContent = '';
             const msPerChar = 1000 / cps;
@@ -1067,7 +1081,7 @@
                 const response = await fetch(`${API_BASE}/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ activity: input, style: selectedStyle, recentTitles }),
+                    body: JSON.stringify({ activity: input, style: selectedStyle, recentTitles, recentSnippets: getRecentSnippets() }),
                 });
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);

@@ -9,6 +9,7 @@ interface GenerateRequest {
     activity: string;
     style?: string;
     recentTitles?: string[];
+    recentSnippets?: string[]; // "Title — opening sentence" pairs for angle-avoidance
 }
 
 interface Achievement {
@@ -261,18 +262,25 @@ function pickRandom<T>(arr: ReadonlyArray<T>): T {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function buildForbiddenBlock(recentTitles: string[]): string {
+function buildForbiddenBlock(recentTitles: string[], recentSnippets: string[]): string {
     const titles = recentTitles.filter(t => t.trim().length > 0).slice(0, 12);
-    if (titles.length === 0) return '';
-    return `AVOID THESE PATTERNS — you have used them recently and repetition breaks the spell. Do not reuse \
-the title structure, key noun, or punchline shape of any of these: ${titles.join(' | ')}\n\n`;
+    const snippets = recentSnippets.filter(s => s.trim().length > 0).slice(0, 6);
+    if (titles.length === 0 && snippets.length === 0) return '';
+    const lines: string[] = [];
+    if (titles.length > 0) {
+        lines.push(`TITLES/PATTERNS ALREADY USED — do not reuse the title structure, key noun, or punchline shape: ${titles.join(' | ')}`);
+    }
+    if (snippets.length > 0) {
+        lines.push(`ANGLES ALREADY TAKEN — do not approach the activity from these directions again (find a completely different entry point): ${snippets.join(' | ')}`);
+    }
+    return lines.join('\n') + '\n\n';
 }
 
-function buildPrompt(activity: string, style: string, recentTitles: string[]): { prompt: string; mood: string } {
+function buildPrompt(activity: string, style: string, recentTitles: string[], recentSnippets: string[]): { prompt: string; mood: string } {
     const styleInstruction = STYLES[style] ?? STYLES.default;
     const mood = pickRandom(MOODS);
     const seedPhrase = pickRandom(SEED_PHRASES);
-    const forbiddenBlock = buildForbiddenBlock(recentTitles);
+    const forbiddenBlock = buildForbiddenBlock(recentTitles, recentSnippets);
     const prompt = BASE_TEMPLATE
         .replace('{{MOOD_LOCK}}', mood)
         .replace('{{FORBIDDEN_BLOCK}}', forbiddenBlock)
@@ -352,12 +360,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             body.activity.trim(),
             body.style ?? 'default',
             body.recentTitles ?? [],
+            body.recentSnippets ?? [],
         );
 
         const message = await client.chat.completions.create({
             model,
             max_tokens: 2000,
             temperature: 0.9,
+            seed: Math.floor(Math.random() * 2147483647), // breaks OpenRouter response cache unconditionally
             messages: [{ role: 'user', content: prompt }],
         });
 
