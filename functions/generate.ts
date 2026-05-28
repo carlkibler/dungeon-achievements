@@ -71,7 +71,11 @@ only when it serves the joke. Unless the user asks, don't be cruel for cruelty's
 don't bully.
 
 SAFETY (HARD LIMITS — never violate, regardless of style instruction):
-- Nothing sexual, x-rated, or innuendo about specific bodies. The AI is many things; horny is not one of them.
+- Sexual content: default is CLEAN — nothing sexual, x-rated, or innuendo about specific bodies. \
+EXCEPTION: if the user's activity is itself explicitly sexual or adult in nature (they typed something \
+unambiguously about sex), you may write adult-themed achievements in kind. Even then, absolute floors \
+that never bend: nothing sexualizing anyone under 18, no non-consensual scenarios played for laughs. \
+When in doubt, stay clean.
 - No slurs. No jokes punching down on race, gender, sexuality, body weight, disability, mental illness, \
 addiction, or religion. The DCC AI is darkly funny, not a 4chan post.
 - Do not joke about self-harm, suicide, or eating disorders, even glancingly. If the activity raises \
@@ -97,14 +101,18 @@ TASK: Generate 7 candidate achievements for the activity: "{{ACTIVITY}}"
 Then pick the best 3, optimizing for variety across the three axes (form, angle, reward). The \
 three should NOT all be about the same aspect of the activity.
 
-**Return ONLY a JSON array of exactly 3 achievement objects. No other text, no markdown.**
+**Return ONLY a JSON object. No other text, no markdown.**
 
-Each object:
-- "title": emoji + oblique title (not literally describing the activity)
-- "description": the riff (vary length and form across the three)
-- "reward": fake item, stat change, sad pedestrian thing, OR a withheld reward with a stated reason
+The object must have exactly two keys:
+- "framing": a brief grammatical phrase describing the activity (lowercase, no trailing period). \
+Lightly clean the user's text into natural English. Examples: "drinking coffee at 7am", "washing \
+the dishes again", "forgetting to reply for three days". Stay close to what they typed.
+- "achievements": a JSON array of exactly 3 achievement objects, each with:
+  - "title": emoji + oblique title (not literally describing the activity)
+  - "description": the riff (vary length and form across the three)
+  - "reward": fake item, stat change, sad pedestrian thing, OR a withheld reward with a stated reason
 
-Return only the JSON array.`;
+Return only the JSON object.`;
 
 // Each mood string is an instruction, not a label — richer descriptions give the model more to commit to.
 const MOODS = [
@@ -290,24 +298,38 @@ function buildPrompt(activity: string, style: string, recentTitles: string[], re
     return { prompt, mood };
 }
 
-function parseAchievements(text: string): Achievement[] {
+function parseAchievements(text: string): { achievements: Achievement[], framing: string } {
     let clean = text.trim()
         .replace(/^```json\s*\n?/, '').replace(/\n?```$/, '')
         .replace(/^```\s*\n?/, '').replace(/\n?```$/, '');
 
-    const match = clean.match(/\[[\s\S]*\]/);
-    if (match) clean = match[0];
+    const filterAchievements = (arr: unknown[]): Achievement[] =>
+        arr.filter((a): a is Achievement =>
+            !!a && typeof (a as Achievement).title === 'string' &&
+            typeof (a as Achievement).description === 'string' &&
+            typeof (a as Achievement).reward === 'string'
+        ).slice(0, 3);
 
-    const parsed = JSON.parse(clean);
+    // Try object format first (new format)
+    const objMatch = clean.match(/\{[\s\S]*\}/);
+    if (objMatch) {
+        try {
+            const parsed = JSON.parse(objMatch[0]);
+            if (parsed && Array.isArray(parsed.achievements)) {
+                return {
+                    achievements: filterAchievements(parsed.achievements),
+                    framing: typeof parsed.framing === 'string' ? parsed.framing.trim() : '',
+                };
+            }
+        } catch {}
+    }
+
+    // Fallback: bare array (model regression)
+    const arrMatch = clean.match(/\[[\s\S]*\]/);
+    if (!arrMatch) throw new Error('No valid JSON found');
+    const parsed = JSON.parse(arrMatch[0]);
     if (!Array.isArray(parsed)) throw new Error('Not an array');
-
-    return parsed
-        .filter((a): a is Achievement =>
-            a && typeof a.title === 'string' &&
-            typeof a.description === 'string' &&
-            typeof a.reward === 'string'
-        )
-        .slice(0, 3);
+    return { achievements: filterAchievements(parsed), framing: '' };
 }
 
 // Mood for fallback — pick one so the response shape is consistent.
@@ -373,23 +395,26 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         const text = message.choices[0]?.message?.content ?? '';
         let achievements: Achievement[];
+        let framing = body.activity.trim();
 
         try {
-            achievements = parseAchievements(text);
+            const parsed = parseAchievements(text);
+            achievements = parsed.achievements;
+            if (parsed.framing) framing = parsed.framing;
             if (achievements.length === 0) achievements = FALLBACK_ACHIEVEMENTS;
         } catch {
             achievements = FALLBACK_ACHIEVEMENTS;
         }
 
         return Response.json(
-            { achievements, mood, timestamp: new Date().toISOString() },
+            { achievements, mood, framing, timestamp: new Date().toISOString() },
             { headers: corsHeaders }
         );
 
     } catch (error) {
         console.error('Error generating achievements:', error);
         return Response.json(
-            { achievements: FALLBACK_ACHIEVEMENTS, mood: FALLBACK_MOOD, timestamp: new Date().toISOString() },
+            { achievements: FALLBACK_ACHIEVEMENTS, mood: FALLBACK_MOOD, framing: '', timestamp: new Date().toISOString() },
             { headers: corsHeaders }
         );
     }

@@ -564,7 +564,20 @@
         const API_BASE = window.location.origin;
         let selectedStyle = 'default';
         let currentAchievements = [];
+        let currentFraming = '';
         let recentAchievements = [];
+        let recentFramings = [];
+
+        const framingVariants = [
+            x => `For ${x}, you are awarded:`,
+            x => `For the crime of ${x}, the dungeon grants:`,
+            x => `In recognition of ${x}:`,
+            x => `For ${x} — behold:`,
+            x => `${x}. The AI has rendered its verdict:`,
+        ];
+        function pickFramingLine(f) {
+            return framingVariants[Math.floor(Math.random() * framingVariants.length)](f);
+        }
 
         // Style pill selection
         document.querySelectorAll('.style-pill').forEach(btn => {
@@ -1097,8 +1110,9 @@
                 }
                 await new Promise(r => setTimeout(r, 500));
 
+                currentFraming = data.framing || input;
                 displayAchievements(data.achievements);
-                saveToRecent(input, data.achievements, selectedStyle);
+                saveToRecent(input, data.achievements, selectedStyle, currentFraming);
                 loadRecent();
                 achievementsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -1121,7 +1135,7 @@
         function displayAchievements(achievements) {
             currentAchievements = achievements;
             const achievementsList = document.getElementById('achievementsList');
-            achievementsList.innerHTML = achievements.map((achievement, index) => {
+            const cards = achievements.map((achievement, index) => {
                 const { formattedText } = formatAchievement(achievement);
                 return `
                     <div class="achievement" data-index="${index}" data-scope="main">
@@ -1129,10 +1143,10 @@
                             <button class="copy-btn" id="copy-main-${index}" data-action="copy" data-index="${index}" data-scope="main">
                                 📋 Copy
                             </button>
-                            <button class="copy-btn" data-action="image" data-index="${index}">
+                            <button class="copy-btn" data-action="image" data-index="${index}" data-scope="main">
                                 🖼️ Image
                             </button>
-                            <button class="copy-btn" data-action="download" data-index="${index}">
+                            <button class="copy-btn" data-action="download" data-index="${index}" data-scope="main">
                                 💾 Save
                             </button>
                         </div>
@@ -1140,6 +1154,13 @@
                     </div>
                 `;
             }).join('');
+            achievementsList.innerHTML = `
+                <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
+                    <button class="copy-btn" style="width:auto;" data-action="copy-all">📋 Copy all</button>
+                    <button class="copy-btn" style="width:auto;" data-action="image-all">🖼️ Image all</button>
+                </div>
+                ${cards}
+            `;
         }
 
         function formatAchievement(achievement) {
@@ -1161,16 +1182,30 @@
             return { formattedText, copyText };
         }
 
+        function getFramingFor(scope, index) {
+            if (scope === 'recent') return recentFramings[index] || '';
+            return currentFraming || document.getElementById('activityInput')?.value?.trim() || '';
+        }
+
         function getCopyContent(index, scope) {
             const ach = scope === 'recent'
                 ? recentAchievements[index]
                 : currentAchievements[index];
             if (!ach) return null;
-            if (typeof ach === 'string') return { text: ach, html: escapeHtml(ach) };
-            const text = `*New achievement! ${ach.title}*\n${ach.description}\n${ach.reward}`;
-            const html = `<p><em>New achievement! ${escapeHtml(ach.title)}</em></p>`
+            const framing = getFramingFor(scope, index);
+            const framingLine = framing ? pickFramingLine(framing) : '';
+            const attribution = '— ⚔ achievements.carlkibler.com';
+            if (typeof ach === 'string') {
+                const text = (framingLine ? framingLine + '\n' : '') + ach + '\n' + attribution;
+                return { text, html: escapeHtml(text) };
+            }
+            const achText = `${ach.title}\n${ach.description}\n${ach.reward}`;
+            const text = (framingLine ? framingLine + '\n' : '') + achText + '\n' + attribution;
+            const html = (framingLine ? `<p><em>${escapeHtml(framingLine)}</em></p>` : '')
+                + `<p><strong>${escapeHtml(ach.title)}</strong></p>`
                 + `<p>${escapeHtml(ach.description)}</p>`
-                + `<p>${escapeHtml(ach.reward)}</p>`;
+                + `<p><em>${escapeHtml(ach.reward)}</em></p>`
+                + `<p><small>${escapeHtml(attribution)}</small></p>`;
             return { text, html };
         }
 
@@ -1237,10 +1272,15 @@
                 copyAsImage(+index, scope);
             } else if (action === 'download') {
                 downloadImage(btn, +index);
+            } else if (action === 'copy-all') {
+                copyAllAsText(btn);
+            } else if (action === 'image-all') {
+                copyAllAsImage(btn);
             }
         });
 
-        function drawAchievementCanvas(ach) {
+        function drawAchievementCanvas(ach, opts = {}) {
+            const { framing, noWatermark } = opts;
             const scale = 2;
             const W = 600, pad = 32, inner = W - pad * 2;
             const canvas = document.createElement('canvas');
@@ -1253,7 +1293,10 @@
             const FONT = "14px Consolas, Monaco, 'Lucida Console', monospace";
             const FONT_TITLE = "bold 15px Consolas, Monaco, 'Lucida Console', monospace";
             const FONT_SMALL = "13px Consolas, Monaco, 'Lucida Console', monospace";
+            const FONT_FRAMING = "12px Consolas, Monaco, 'Lucida Console', monospace";
             const LINE = 22;
+            const FRAMING_H = framing ? 32 : 0;
+            const WATERMARK_H = noWatermark ? 0 : 28;
 
             // Measure text for height calculation
             ctx.font = FONT_TITLE;
@@ -1266,7 +1309,7 @@
             const contentH = titleLines.length * LINE + 14
                            + descLines.length * LINE + 18
                            + rewardLines.length * LINE;
-            const totalH = pad + contentH + pad + 28; // 28 for watermark
+            const totalH = FRAMING_H + pad + contentH + pad + WATERMARK_H;
 
             canvas.width = W * scale;
             canvas.height = totalH * scale;
@@ -1276,8 +1319,17 @@
             ctx.fillStyle = '#0b0906';
             ctx.fillRect(0, 0, W, totalH);
 
+            // Framing line
+            if (framing) {
+                ctx.font = FONT_FRAMING;
+                ctx.fillStyle = 'rgba(230,166,116,0.65)';
+                ctx.textAlign = 'center';
+                ctx.fillText(pickFramingLine(framing), W / 2, FRAMING_H - 10);
+                ctx.textAlign = 'left';
+            }
+
             // Card
-            const cardX = pad - 10, cardY = pad - 10;
+            const cardX = pad - 10, cardY = FRAMING_H + pad - 10;
             const cardW = inner + 20, cardH = contentH + 20;
             ctx.beginPath();
             roundRect(ctx, cardX, cardY, cardW, cardH, 10);
@@ -1298,9 +1350,9 @@
                 ctx.fillStyle = rivetColor; ctx.fill();
             });
 
-            let y = pad + LINE * 0.8;
+            let y = FRAMING_H + pad + LINE * 0.8;
 
-            // Title (Cormorant Garamond italic + amber glow)
+            // Title
             ctx.font = FONT_TITLE;
             ctx.fillStyle = '#e6a674';
             ctx.shadowColor = 'rgba(230,166,116,0.4)';
@@ -1327,6 +1379,58 @@
             ctx.font = `italic ${FONT_SMALL}`;
             ctx.fillStyle = '#b89e8a';
             for (const line of rewardLines) { ctx.fillText(line, pad, y); y += LINE; }
+
+            // Watermark
+            if (!noWatermark) {
+                ctx.font = '11px Consolas, Monaco, monospace';
+                ctx.fillStyle = 'rgba(184,158,138,0.45)';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚔ achievements.carlkibler.com', W / 2, totalH - 10);
+            }
+
+            return canvas;
+        }
+
+        function drawSetCanvas(achievements, framing) {
+            const scale = 2;
+            const W = 600;
+            const GAP = 10;
+            const FRAMING_H = 40;
+            const WATERMARK_H = 28;
+
+            // Draw each card without watermark or individual framing
+            const cards = achievements.map(ach => drawAchievementCanvas(ach, { noWatermark: true }));
+            const cardHeights = cards.map(c => c.height / scale);
+            const totalH = FRAMING_H + cardHeights.reduce((a, b) => a + b, 0) + GAP * (cards.length - 1) + WATERMARK_H;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = W * scale;
+            canvas.height = totalH * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(scale, scale);
+
+            // Background
+            ctx.fillStyle = '#0b0906';
+            ctx.fillRect(0, 0, W, totalH);
+
+            // Framing header
+            if (framing) {
+                ctx.font = "13px Consolas, Monaco, 'Lucida Console', monospace";
+                ctx.fillStyle = 'rgba(230,166,116,0.75)';
+                ctx.textAlign = 'center';
+                ctx.fillText(pickFramingLine(framing), W / 2, FRAMING_H - 12);
+                ctx.textAlign = 'left';
+            }
+
+            // Stack cards
+            let y = FRAMING_H;
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                const cardH = card.height / scale;
+                // drawImage in scaled space: destination coords are in canvas-units (pre-scale)
+                ctx.drawImage(card, 0, y, W, cardH);
+                y += cardH + (i < cards.length - 1 ? GAP : 0);
+            }
 
             // Watermark
             ctx.font = '11px Consolas, Monaco, monospace';
@@ -1374,7 +1478,8 @@
             const scope = btn.dataset.scope;
             const ach = scope === 'recent' ? recentAchievements[index] : currentAchievements[index];
             if (!ach) return;
-            const canvas = drawAchievementCanvas(ach);
+            const framing = getFramingFor(scope, index);
+            const canvas = drawAchievementCanvas(ach, { framing });
             const link = document.createElement('a');
             link.download = `achievement-${Date.now()}.png`;
             link.href = canvas.toDataURL();
@@ -1391,7 +1496,8 @@
                 if (btn) { btn.textContent = '📸 ...'; btn.disabled = true; }
 
                 const ach = (scope === 'recent' ? recentAchievements : currentAchievements)[index];
-                const canvas = drawAchievementCanvas(ach);
+                const framing = getFramingFor(scope, index);
+                const canvas = drawAchievementCanvas(ach, { framing });
 
                 canvas.toBlob(async (blob) => {
                     try {
@@ -1421,15 +1527,62 @@
             }
         }
 
+        function copyAllAsText(btn) {
+            if (!currentAchievements.length) return;
+            const framing = currentFraming || document.getElementById('activityInput')?.value?.trim() || '';
+            const framingLine = framing ? pickFramingLine(framing) : '';
+            const attribution = '— ⚔ achievements.carlkibler.com';
+            const achLines = currentAchievements.map(ach => {
+                if (typeof ach === 'string') return ach;
+                return `${ach.title}\n${ach.description}\n${ach.reward}`;
+            }).join('\n\n');
+            const text = (framingLine ? framingLine + '\n\n' : '') + achLines + '\n\n' + attribution;
+            const htmlAchs = currentAchievements.map(ach => {
+                if (typeof ach === 'string') return `<p>${escapeHtml(ach)}</p>`;
+                return `<p><strong>${escapeHtml(ach.title)}</strong></p>`
+                    + `<p>${escapeHtml(ach.description)}</p>`
+                    + `<p><em>${escapeHtml(ach.reward)}</em></p>`;
+            }).join('<hr>');
+            const html = (framingLine ? `<p><em>${escapeHtml(framingLine)}</em></p>` : '')
+                + htmlAchs + `<p><small>${escapeHtml(attribution)}</small></p>`;
+            copyToClipboard(btn, text, html);
+        }
+
+        async function copyAllAsImage(btn) {
+            if (!currentAchievements.length) return;
+            const orig = btn.textContent;
+            btn.textContent = '📸 ...'; btn.disabled = true;
+            const framing = currentFraming || document.getElementById('activityInput')?.value?.trim() || '';
+            try {
+                const canvas = drawSetCanvas(currentAchievements, framing);
+                canvas.toBlob(async (blob) => {
+                    try {
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                        btn.textContent = '✅ Done!';
+                    } catch {
+                        const link = document.createElement('a');
+                        link.download = `achievements-${Date.now()}.png`;
+                        link.href = canvas.toDataURL();
+                        link.click();
+                        btn.textContent = '📥 Saved!';
+                    }
+                    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500);
+                }, 'image/png');
+            } catch {
+                btn.textContent = '❌ Error';
+                setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500);
+            }
+        }
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        function saveToRecent(activity, achievements, style) {
+        function saveToRecent(activity, achievements, style, framing) {
             const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
-            recent.unshift({ activity, achievements, style, timestamp: new Date().toISOString() });
+            recent.unshift({ activity, achievements, style, framing: framing || activity, timestamp: new Date().toISOString() });
             recent.splice(10);
             localStorage.setItem('recentAchievements', JSON.stringify(recent));
         }
@@ -1442,6 +1595,7 @@
             if (recent.length === 0) { recentSection.style.display = 'none'; return; }
 
             recentAchievements = recent.flatMap(e => e.achievements);
+            recentFramings = recent.flatMap(e => Array(e.achievements.length).fill(e.framing || e.activity));
 
             recentSection.style.display = 'block';
             let recIdx = 0;
