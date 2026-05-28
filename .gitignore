@@ -33,3 +33,6 @@ samconfig.toml
 # Temporary files
 tmp/
 temp/
+
+# Dependency age cache (stable publish dates, per-machine)
+.deps-age-cache.json

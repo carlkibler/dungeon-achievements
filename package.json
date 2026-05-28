@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "wrangler pages dev public",
     "deploy": "wrangler pages deploy public",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node scripts/check-deps-age.js"
   },
   "dependencies": {
     "openai": "^4.67.0"
