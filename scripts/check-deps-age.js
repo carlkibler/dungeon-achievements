@@ -58,6 +58,10 @@ async function checkBatch(batch, cache) {
 }
 
 async function main() {
+    if (process.env.CI) {
+        console.log('deps-age: CI environment detected, skipping cooldown check.');
+        return;
+    }
     if (!fs.existsSync(LOCK_FILE)) {
         console.log('deps-age: no package-lock.json, skipping.');
         return;
