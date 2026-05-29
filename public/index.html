@@ -76,7 +76,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 880px;
             margin: 0 auto;
         }
 
@@ -166,14 +166,14 @@
         }
 
         .style-pills {
-            display: grid;
-            grid-template-columns: repeat(4, auto);
-            justify-content: start;
-            gap: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
         }
 
         .style-pill {
-            padding: 5px 10px;
+            padding: 5px 9px;
             background: rgba(0,0,0,0.3);
             border: 1px solid var(--c-line-strong);
             border-radius: 999px;
@@ -203,23 +203,6 @@
         }
 
         .examples-section.hidden {
-            display: none;
-        }
-
-        .ghost-stack {
-            margin-top: 20px;
-        }
-        .ghost-stack.hidden {
-            display: none;
-        }
-        .achievement.is-ghost {
-            opacity: 0.12;
-            pointer-events: none;
-            user-select: none;
-            filter: grayscale(30%);
-            animation: none;
-        }
-        .achievement.is-ghost .achievement-actions {
             display: none;
         }
 
@@ -541,7 +524,7 @@
             <div class="style-selector">
                 <span class="style-label">Style:</span>
                 <div class="style-pills">
-                    <button class="style-pill active" data-style="default">🏰 DCC Default</button>
+                    <button class="style-pill active" data-style="default">🏰 Default</button>
                     <button class="style-pill" data-style="corporate">💼 Corporate</button>
                     <button class="style-pill" data-style="funny">🤪 Absurd</button>
                     <button class="style-pill" data-style="nice">💖 Wholesome</button>
@@ -550,8 +533,6 @@
                     <button class="style-pill" data-style="shakespeare">📜 Bard</button>
                 </div>
             </div>
-
-            <div id="ghostStack" class="ghost-stack hidden"></div>
 
             <button id="generateBtn" class="generate-btn" onclick="generateAchievements()">
                 ⚔️ Generate Achievements
@@ -1146,7 +1127,6 @@
         function displayAchievements(achievements) {
             currentAchievements = achievements;
 
-            document.getElementById('ghostStack')?.classList.add('hidden');
             const achievementsList = document.getElementById('achievementsList');
             const cards = achievements.map((achievement, index) => {
                 const { formattedText } = formatAchievement(achievement);
@@ -1642,26 +1622,6 @@
             }
         }
 
-        function renderGhostStack() {
-            const stack = document.getElementById('ghostStack');
-            if (!stack) return;
-            const CANONICAL_GHOSTS = [
-                { title: '☕ Functional Addict', description: 'Daily Survival Pattern Confirmed. The ritual precedes the person. You are, in measurable biological terms, the coffee.', reward: 'Four minutes of false confidence.' },
-                { title: '📋 Witnessed by No One', description: "You completed a task. The universe noted it and filed it under 'fine, whatever.' Proceed.", reward: 'The quiet satisfaction of having done a thing.' },
-                { title: '📅 Calendar Sovereignty (Disputed)', description: 'You moved the meeting. It did not want to be moved. The meeting will remember this.', reward: 'Seventeen minutes you will somehow still lose.' },
-            ];
-            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
-            const ghosts = recent.length >= 2
-                ? recent.slice(0, 3).map(e => e.achievements[0]).filter(Boolean)
-                : CANONICAL_GHOSTS;
-            if (ghosts.length === 0) return;
-            stack.classList.remove('hidden');
-            stack.innerHTML = ghosts.map(ach => {
-                const { formattedText } = formatAchievement(ach);
-                return `<div class="achievement is-ghost"><div class="achievement-text">${formattedText}</div></div>`;
-            }).join('');
-        }
-
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
@@ -1723,7 +1683,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadRecent();
-            renderGhostStack();
         });
 
         document.getElementById('activityInput').addEventListener('keydown', (e) => {
