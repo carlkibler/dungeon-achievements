@@ -11,7 +11,7 @@ dev:
 	npx wrangler pages dev public
 
 deploy:
-	npx wrangler pages deploy public
+	CLOUDFLARE_API_TOKEN=$(shell security find-generic-password -a cloudflare -s dungeon-achievements-pages -w) npx wrangler pages deploy public
 
 secret:
 	npx wrangler pages secret put OPENROUTER_API_KEY

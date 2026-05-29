@@ -4,7 +4,7 @@
   "description": "Dungeon Crawler Carl style achievement generator — Cloudflare Pages + OpenRouter",
   "scripts": {
     "dev": "wrangler pages dev public",
-    "deploy": "wrangler pages deploy public",
+    "deploy": "CLOUDFLARE_API_TOKEN=$(security find-generic-password -a cloudflare -s dungeon-achievements-pages -w) wrangler pages deploy public",
     "typecheck": "tsc --noEmit",
     "analytics": "node scripts/analytics-report.js",
     "provision-token": "node scripts/provision-token.js",
