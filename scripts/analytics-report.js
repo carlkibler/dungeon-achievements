@@ -10,7 +10,8 @@ const https = require('https');
 const path = require('path');
 const fs = require('fs');
 
-const ACCOUNT_ID = 'c0dd6ffd2dd099b58b892c682e74ad28';
+const ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
+if (!ACCOUNT_ID) { console.error('CF_ACCOUNT_ID not set — add it to .env'); process.exit(1); }
 const DATASET = 'da_generate_events';
 
 const args = process.argv.slice(2);

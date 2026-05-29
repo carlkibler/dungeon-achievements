@@ -16,4 +16,4 @@ jobs:
         run: npx wrangler pages deploy public --project-name=dungeon-achievements --commit-dirty=true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: c0dd6ffd2dd099b58b892c682e74ad28
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

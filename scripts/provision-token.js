@@ -15,9 +15,10 @@ const https = require('https');
 const fs   = require('fs');
 const path = require('path');
 
-const ACCOUNT_ID   = 'c0dd6ffd2dd099b58b892c682e74ad28';
+const ACCOUNT_ID   = process.env.CF_ACCOUNT_ID;
+if (!ACCOUNT_ID) { console.error('CF_ACCOUNT_ID not set — add it to .env or export it'); process.exit(1); }
 const TOKEN_NAME   = 'dungeon-achievements:analytics-read';
-const ANALYTICS_RO = 'b89a480218d04ceb98b4fe57ca29dc1f'; // Account Analytics Read
+const ANALYTICS_RO = 'b89a480218d04ceb98b4fe57ca29dc1f'; // public CF permission group UUID (same for all accounts)
 const ENV_FILE     = path.join(__dirname, '..', '.env');
 
 const MGMT = process.env.CLOUDFLARE_API_MGMT_TOKEN;
