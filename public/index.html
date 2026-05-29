@@ -1270,13 +1270,16 @@
             } else if (action === 'download') {
                 downloadImage(btn, +index);
             } else if (action === 'copy-all') {
-                copyAllAsText(btn);
+                const re = btn.dataset.entryIdx != null ? getRecentEntry(+btn.dataset.entryIdx) : null;
+                copyAllAsText(btn, re?.achievements, re ? (re.framing || re.activity) : null);
             } else if (action === 'image-all') {
-                copyAllAsImage(btn);
+                const re = btn.dataset.entryIdx != null ? getRecentEntry(+btn.dataset.entryIdx) : null;
+                copyAllAsImage(btn, re?.achievements, re ? (re.framing || re.activity) : null);
             } else if (action === 'share') {
                 shareAchievement(+index, scope);
             } else if (action === 'share-all') {
-                shareAll(btn);
+                const re = btn.dataset.entryIdx != null ? getRecentEntry(+btn.dataset.entryIdx) : null;
+                shareAll(btn, re?.achievements, re ? (re.framing || re.activity) : null);
             }
         });
 
@@ -1528,17 +1531,18 @@
             }
         }
 
-        function copyAllAsText(btn) {
-            if (!currentAchievements.length) return;
-            const framing = currentFraming || document.getElementById('activityInput')?.value?.trim() || '';
+        function copyAllAsText(btn, achs, framingOverride) {
+            const achievements = achs || currentAchievements;
+            if (!achievements.length) return;
+            const framing = framingOverride != null ? framingOverride : (currentFraming || document.getElementById('activityInput')?.value?.trim() || '');
             const framingLine = framing ? pickFramingLine(framing) : '';
             const attribution = '— ⚔ achievements.carlkibler.com';
-            const achLines = currentAchievements.map(ach => {
+            const achLines = achievements.map(ach => {
                 if (typeof ach === 'string') return ach;
                 return `${ach.title}\n${ach.description}\n${ach.reward}`;
             }).join('\n\n');
             const text = (framingLine ? framingLine + '\n\n' : '') + achLines + '\n\n' + attribution;
-            const htmlAchs = currentAchievements.map(ach => {
+            const htmlAchs = achievements.map(ach => {
                 if (typeof ach === 'string') return `<p>${escapeHtml(ach)}</p>`;
                 return `<p><strong>${escapeHtml(ach.title)}</strong></p>`
                     + `<p>${escapeHtml(ach.description)}</p>`
@@ -1549,13 +1553,14 @@
             copyToClipboard(btn, text, html);
         }
 
-        async function copyAllAsImage(btn) {
-            if (!currentAchievements.length) return;
+        async function copyAllAsImage(btn, achs, framingOverride) {
+            const achievements = achs || currentAchievements;
+            if (!achievements.length) return;
             const orig = btn.textContent;
             btn.textContent = '📸 ...'; btn.disabled = true;
-            const framing = currentFraming || document.getElementById('activityInput')?.value?.trim() || '';
+            const framing = framingOverride != null ? framingOverride : (currentFraming || document.getElementById('activityInput')?.value?.trim() || '');
             try {
-                const canvas = drawSetCanvas(currentAchievements, framing);
+                const canvas = drawSetCanvas(achievements, framing);
                 canvas.toBlob(async (blob) => {
                     try {
                         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
@@ -1596,13 +1601,14 @@
             }, 'image/png');
         }
 
-        async function shareAll(btn) {
-            if (!currentAchievements.length) return;
-            const framing = currentFraming || document.getElementById('activityInput')?.value?.trim() || '';
+        async function shareAll(btn, achs, framingOverride) {
+            const achievements = achs || currentAchievements;
+            if (!achievements.length) return;
+            const framing = framingOverride != null ? framingOverride : (currentFraming || document.getElementById('activityInput')?.value?.trim() || '');
             const orig = btn.textContent;
             btn.textContent = '📤 ...'; btn.disabled = true;
             try {
-                const canvas = drawSetCanvas(currentAchievements, framing);
+                const canvas = drawSetCanvas(achievements, framing);
                 canvas.toBlob(async (blob) => {
                     const file = new File([blob], 'dca-achievements.png', { type: 'image/png' });
                     const shareText = (framing ? framing + '\n' : '') + '— ⚔ achievements.carlkibler.com';
@@ -1635,6 +1641,11 @@
             localStorage.setItem('recentAchievements', JSON.stringify(recent));
         }
 
+        function getRecentEntry(idx) {
+            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
+            return recent[idx] || null;
+        }
+
         function loadRecent() {
             const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
             const recentSection = document.getElementById('recentSection');
@@ -1647,11 +1658,18 @@
 
             recentSection.style.display = 'block';
             let recIdx = 0;
-            recentList.innerHTML = recent.slice(0, 5).map((entry) => `
+            recentList.innerHTML = recent.slice(0, 5).map((entry, entryIdx) => `
                 <div style="margin-bottom:20px;padding:14px;border:1px solid #4a5568;border-radius:8px;background:rgba(0,0,0,0.2);">
-                    <div style="color:#a0a6ad;font-size:0.85rem;margin-bottom:10px;">
-                        "${escapeHtml(entry.activity)}" — ${new Date(entry.timestamp).toLocaleDateString()}
-                        ${entry.style && entry.style !== 'default' ? `<span style="margin-left:6px;color:#ffd70099;">[${entry.style}]</span>` : ''}
+                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">
+                        <div style="color:#a0a6ad;font-size:0.85rem;">
+                            "${escapeHtml(entry.activity)}" — ${new Date(entry.timestamp).toLocaleDateString()}
+                            ${entry.style && entry.style !== 'default' ? `<span style="margin-left:6px;color:#ffd70099;">[${entry.style}]</span>` : ''}
+                        </div>
+                        <div style="display:flex;gap:6px;flex-shrink:0;">
+                            <button class="copy-btn" style="width:auto;" data-action="copy-all" data-entry-idx="${entryIdx}">📋 Copy all</button>
+                            <button class="copy-btn" style="width:auto;" data-action="image-all" data-entry-idx="${entryIdx}">🖼️ Image all</button>
+                            ${canNativeShare ? `<button class="copy-btn" style="width:auto;" data-action="share-all" data-entry-idx="${entryIdx}">📤 Share all</button>` : ''}
+                        </div>
                     </div>
                     ${entry.achievements.map((ach) => {
                         const { formattedText } = formatAchievement(ach);
