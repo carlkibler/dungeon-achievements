@@ -206,6 +206,23 @@
             display: none;
         }
 
+        .ghost-stack {
+            margin-top: 20px;
+        }
+        .ghost-stack.hidden {
+            display: none;
+        }
+        .achievement.is-ghost {
+            opacity: 0.12;
+            pointer-events: none;
+            user-select: none;
+            filter: grayscale(30%);
+            animation: none;
+        }
+        .achievement.is-ghost .achievement-actions {
+            display: none;
+        }
+
         .examples-title {
             color: var(--c-accent-soft);
             font-size: 0.9rem;
@@ -534,15 +551,7 @@
                 </div>
             </div>
 
-            <div class="examples-section hidden">
-                <h3 class="examples-title">Quick Examples:</h3>
-                <div class="examples-grid">
-                    <button class="example-btn" onclick="setExample('Made coffee this morning')">☕ Made coffee this morning</button>
-                    <button class="example-btn" onclick="setExample('Survived a Zoom meeting')">💻 Survived a Zoom meeting</button>
-                    <button class="example-btn" onclick="setExample('Forgot to save my work')">💾 Forgot to save my work</button>
-                    <button class="example-btn" onclick="setExample('Successfully parallel parked')">🚗 Successfully parallel parked</button>
-                </div>
-            </div>
+            <div id="ghostStack" class="ghost-stack hidden"></div>
 
             <button id="generateBtn" class="generate-btn" onclick="generateAchievements()">
                 ⚔️ Generate Achievements
@@ -567,6 +576,8 @@
         let currentFraming = '';
         let recentAchievements = [];
         let recentFramings = [];
+
+        const canNativeShare = typeof navigator.share === 'function';
 
         const framingVariants = [
             x => `For ${x}, you are awarded:`,
@@ -1134,6 +1145,8 @@
 
         function displayAchievements(achievements) {
             currentAchievements = achievements;
+
+            document.getElementById('ghostStack')?.classList.add('hidden');
             const achievementsList = document.getElementById('achievementsList');
             const cards = achievements.map((achievement, index) => {
                 const { formattedText } = formatAchievement(achievement);
@@ -1149,6 +1162,8 @@
                             <button class="copy-btn" data-action="download" data-index="${index}" data-scope="main">
                                 💾 Save
                             </button>
+
+                            ${canNativeShare ? `<button class="copy-btn" data-action="share" data-index="${index}" data-scope="main">📤 Share</button>` : ''}
                         </div>
                         <div class="achievement-text">${formattedText}</div>
                     </div>
@@ -1158,6 +1173,8 @@
                 <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
                     <button class="copy-btn" style="width:auto;" data-action="copy-all">📋 Copy all</button>
                     <button class="copy-btn" style="width:auto;" data-action="image-all">🖼️ Image all</button>
+
+                    ${canNativeShare ? '<button class="copy-btn" style="width:auto;" data-action="share-all">📤 Share all</button>' : ''}
                 </div>
                 ${cards}
             `;
@@ -1276,6 +1293,10 @@
                 copyAllAsText(btn);
             } else if (action === 'image-all') {
                 copyAllAsImage(btn);
+            } else if (action === 'share') {
+                shareAchievement(+index, scope);
+            } else if (action === 'share-all') {
+                shareAll(btn);
             }
         });
 
@@ -1574,6 +1595,73 @@
             }
         }
 
+
+        async function shareAchievement(index, scope) {
+            const ach = (scope === 'recent' ? recentAchievements : currentAchievements)[index];
+            if (!ach) return;
+            const framing = getFramingFor(scope, index);
+            const canvas = drawAchievementCanvas(ach, { framing });
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'dca-achievement.png', { type: 'image/png' });
+                const shareText = (framing ? framing + '\n' : '') + '— ⚔ achievements.carlkibler.com';
+                try {
+                    if (navigator.canShare?.({ files: [file] })) {
+                        await navigator.share({ files: [file], text: shareText, title: 'Dungeon Crawler Achievement' });
+                    } else {
+                        await navigator.share({ text: shareText, url: 'https://achievements.carlkibler.com' });
+                    }
+                } catch (err) {
+                    if (err.name !== 'AbortError') console.error('Share failed:', err);
+                }
+            }, 'image/png');
+        }
+
+        async function shareAll(btn) {
+            if (!currentAchievements.length) return;
+            const framing = currentFraming || document.getElementById('activityInput')?.value?.trim() || '';
+            const orig = btn.textContent;
+            btn.textContent = '📤 ...'; btn.disabled = true;
+            try {
+                const canvas = drawSetCanvas(currentAchievements, framing);
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'dca-achievements.png', { type: 'image/png' });
+                    const shareText = (framing ? framing + '\n' : '') + '— ⚔ achievements.carlkibler.com';
+                    try {
+                        if (navigator.canShare?.({ files: [file] })) {
+                            await navigator.share({ files: [file], text: shareText, title: 'Dungeon Crawler Achievements' });
+                        } else {
+                            await navigator.share({ text: shareText, url: 'https://achievements.carlkibler.com' });
+                        }
+                    } catch (err) {
+                        if (err.name !== 'AbortError') console.error('Share all failed:', err);
+                    }
+                    btn.textContent = orig; btn.disabled = false;
+                }, 'image/png');
+            } catch {
+                btn.textContent = orig; btn.disabled = false;
+            }
+        }
+
+        function renderGhostStack() {
+            const stack = document.getElementById('ghostStack');
+            if (!stack) return;
+            const CANONICAL_GHOSTS = [
+                { title: '☕ Functional Addict', description: 'Daily Survival Pattern Confirmed. The ritual precedes the person. You are, in measurable biological terms, the coffee.', reward: 'Four minutes of false confidence.' },
+                { title: '📋 Witnessed by No One', description: "You completed a task. The universe noted it and filed it under 'fine, whatever.' Proceed.", reward: 'The quiet satisfaction of having done a thing.' },
+                { title: '📅 Calendar Sovereignty (Disputed)', description: 'You moved the meeting. It did not want to be moved. The meeting will remember this.', reward: 'Seventeen minutes you will somehow still lose.' },
+            ];
+            const recent = JSON.parse(localStorage.getItem('recentAchievements') || '[]');
+            const ghosts = recent.length >= 2
+                ? recent.slice(0, 3).map(e => e.achievements[0]).filter(Boolean)
+                : CANONICAL_GHOSTS;
+            if (ghosts.length === 0) return;
+            stack.classList.remove('hidden');
+            stack.innerHTML = ghosts.map(ach => {
+                const { formattedText } = formatAchievement(ach);
+                return `<div class="achievement is-ghost"><div class="achievement-text">${formattedText}</div></div>`;
+            }).join('');
+        }
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
@@ -1622,6 +1710,8 @@
                                     <button class="copy-btn" data-action="download" data-index="${idx}" data-scope="recent">
                                         💾 Save
                                     </button>
+
+                                    ${canNativeShare ? `<button class="copy-btn" data-action="share" data-index="${idx}" data-scope="recent">📤 Share</button>` : ''}
                                 </div>
                                 <div class="achievement-text" style="font-size:0.88rem;">${formattedText}</div>
                             </div>
@@ -1633,10 +1723,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadRecent();
-            // Show examples only for first-time visitors
-            if (!localStorage.getItem('recentAchievements')) {
-                document.querySelector('.examples-section').classList.remove('hidden');
-            }
+            renderGhostStack();
         });
 
         document.getElementById('activityInput').addEventListener('keydown', (e) => {

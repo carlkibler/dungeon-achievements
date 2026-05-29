@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 interface Env {
     OPENROUTER_API_KEY: string;
     OPENROUTER_MODEL?: string;
+    ANALYTICS?: AnalyticsEngineDataset;
 }
 
 interface GenerateRequest {
@@ -353,13 +354,39 @@ const FALLBACK_ACHIEVEMENTS: Achievement[] = [
     },
 ];
 
+function writeAnalytics(
+    env: Env,
+    style: string,
+    model: string,
+    success: boolean,
+    framingReturned: boolean,
+    hasRecentHistory: boolean,
+    durationMs: number,
+    activityLength: number,
+    achievementsCount: number,
+    country: string,
+): void {
+    try {
+        env.ANALYTICS?.writeDataPoint({
+            blobs: [style, country, model, success ? 'success' : 'fallback', framingReturned ? '1' : '0', hasRecentHistory ? '1' : '0'],
+            doubles: [durationMs, activityLength, achievementsCount],
+            indexes: [style],
+        });
+    } catch {
+        // analytics failure must never break /generate
+    }
+}
+
 export const onRequestPost: PagesFunction<Env> = async (context) => {
     const { request, env } = context;
+    const t0 = Date.now();
 
     const corsHeaders = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
     };
+
+    const country = (request as Request & { cf?: { country?: string } }).cf?.country ?? 'unknown';
 
     try {
         const body = await request.json() as GenerateRequest;
@@ -367,6 +394,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         if (!body.activity?.trim()) {
             return Response.json({ error: 'Activity is required' }, { status: 400, headers: corsHeaders });
         }
+
+        const activityLength = body.activity.trim().length;
+        const style = body.style ?? 'default';
+        const hasRecentHistory = (body.recentTitles?.length ?? 0) > 0;
 
         const client = new OpenAI({
             baseURL: 'https://openrouter.ai/api/v1',
@@ -380,7 +411,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const model = env.OPENROUTER_MODEL ?? 'anthropic/claude-3-5-haiku';
         const { prompt, mood } = buildPrompt(
             body.activity.trim(),
-            body.style ?? 'default',
+            style,
             body.recentTitles ?? [],
             body.recentSnippets ?? [],
         );
@@ -396,15 +427,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const text = message.choices[0]?.message?.content ?? '';
         let achievements: Achievement[];
         let framing = body.activity.trim();
+        let success = true;
+        let framingReturned = false;
 
         try {
             const parsed = parseAchievements(text);
             achievements = parsed.achievements;
-            if (parsed.framing) framing = parsed.framing;
-            if (achievements.length === 0) achievements = FALLBACK_ACHIEVEMENTS;
+            if (parsed.framing) { framing = parsed.framing; framingReturned = true; }
+            if (achievements.length === 0) { achievements = FALLBACK_ACHIEVEMENTS; success = false; }
         } catch {
             achievements = FALLBACK_ACHIEVEMENTS;
+            success = false;
         }
+
+        writeAnalytics(env, style, model, success, framingReturned, hasRecentHistory, Date.now() - t0, activityLength, achievements.length, country);
 
         return Response.json(
             { achievements, mood, framing, timestamp: new Date().toISOString() },
@@ -413,6 +449,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     } catch (error) {
         console.error('Error generating achievements:', error);
+        writeAnalytics(env, 'unknown', 'unknown', false, false, false, Date.now() - t0, 0, 0, country);
         return Response.json(
             { achievements: FALLBACK_ACHIEVEMENTS, mood: FALLBACK_MOOD, framing: '', timestamp: new Date().toISOString() },
             { headers: corsHeaders }
