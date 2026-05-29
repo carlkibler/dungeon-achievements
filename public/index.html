@@ -563,11 +563,21 @@
         const canNativeShare = typeof navigator.share === 'function';
 
         const framingVariants = [
-            x => `For ${x}, you are awarded:`,
-            x => `For the crime of ${x}, the dungeon grants:`,
+            // neutral
+            x => `${x} has been logged. You are owed:`,
+            x => `For the act of ${x}, the record now shows:`,
+            // sardonic
+            x => `${x} — a thing that happened. You receive:`,
+            x => `${x}. The AI has rendered its verdict:`,
+            x => `For ${x}, which you apparently did on purpose:`,
+            x => `The dungeon has reviewed ${x} and is choosing not to comment:`,
+            x => `You did ${x}. The dungeon, unmoved, grants:`,
+            // character-y
+            x => `${x}. Against its better judgment, the System awards:`,
+            x => `The ledger reflects ${x}. Compensation is as follows:`,
+            // dramatic holdovers
             x => `In recognition of ${x}:`,
             x => `For ${x} — behold:`,
-            x => `${x}. The AI has rendered its verdict:`,
         ];
         function pickFramingLine(f) {
             return framingVariants[Math.floor(Math.random() * framingVariants.length)](f);
