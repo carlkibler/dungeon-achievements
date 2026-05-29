@@ -1311,8 +1311,8 @@
             const FONT_SMALL = "13px Consolas, Monaco, 'Lucida Console', monospace";
             const FONT_FRAMING = "12px Consolas, Monaco, 'Lucida Console', monospace";
             const LINE = 22;
-            const FRAMING_H = framing ? 32 : 0;
-            const WATERMARK_H = noWatermark ? 0 : 28;
+            const FRAMING_H = framing ? 22 : 0;
+            const WATERMARK_H = noWatermark ? 0 : 20;
 
             // Measure text for height calculation
             ctx.font = FONT_TITLE;
@@ -1325,7 +1325,9 @@
             const contentH = titleLines.length * LINE + 14
                            + descLines.length * LINE + 18
                            + rewardLines.length * LINE;
-            const totalH = FRAMING_H + pad + contentH + pad + WATERMARK_H;
+            const TOP_PAD = 16;
+            const BOT_PAD = 14;
+            const totalH = FRAMING_H + TOP_PAD + contentH + BOT_PAD + WATERMARK_H;
 
             canvas.width = W * scale;
             canvas.height = totalH * scale;
@@ -1340,12 +1342,12 @@
                 ctx.font = FONT_FRAMING;
                 ctx.fillStyle = 'rgba(230,166,116,0.65)';
                 ctx.textAlign = 'center';
-                ctx.fillText(pickFramingLine(framing), W / 2, FRAMING_H - 10);
+                ctx.fillText(pickFramingLine(framing), W / 2, FRAMING_H - 6);
                 ctx.textAlign = 'left';
             }
 
             // Card
-            const cardX = pad - 10, cardY = FRAMING_H + pad - 10;
+            const cardX = pad - 10, cardY = FRAMING_H + TOP_PAD - 10;
             const cardW = inner + 20, cardH = contentH + 20;
             ctx.beginPath();
             roundRect(ctx, cardX, cardY, cardW, cardH, 10);
@@ -1366,7 +1368,7 @@
                 ctx.fillStyle = rivetColor; ctx.fill();
             });
 
-            let y = FRAMING_H + pad + LINE * 0.8;
+            let y = FRAMING_H + TOP_PAD + LINE * 0.8;
 
             // Title
             ctx.font = FONT_TITLE;
@@ -1401,7 +1403,7 @@
                 ctx.font = '11px Consolas, Monaco, monospace';
                 ctx.fillStyle = 'rgba(184,158,138,0.45)';
                 ctx.textAlign = 'center';
-                ctx.fillText('⚔ achievements.carlkibler.com', W / 2, totalH - 10);
+                ctx.fillText('achievements.carlkibler.com', W / 2, totalH - 6);
             }
 
             return canvas;
@@ -1411,8 +1413,8 @@
             const scale = 2;
             const W = 600;
             const GAP = 10;
-            const FRAMING_H = 40;
-            const WATERMARK_H = 28;
+            const FRAMING_H = 28;
+            const WATERMARK_H = 20;
 
             // Draw each card without watermark or individual framing
             const cards = achievements.map(ach => drawAchievementCanvas(ach, { noWatermark: true }));
@@ -1434,7 +1436,7 @@
                 ctx.font = "13px Consolas, Monaco, 'Lucida Console', monospace";
                 ctx.fillStyle = 'rgba(230,166,116,0.75)';
                 ctx.textAlign = 'center';
-                ctx.fillText(pickFramingLine(framing), W / 2, FRAMING_H - 12);
+                ctx.fillText(pickFramingLine(framing), W / 2, FRAMING_H - 8);
                 ctx.textAlign = 'left';
             }
 
@@ -1452,7 +1454,7 @@
             ctx.font = '11px Consolas, Monaco, monospace';
             ctx.fillStyle = 'rgba(184,158,138,0.45)';
             ctx.textAlign = 'center';
-            ctx.fillText('⚔ achievements.carlkibler.com', W / 2, totalH - 10);
+            ctx.fillText('achievements.carlkibler.com', W / 2, totalH - 6);
 
             return canvas;
         }
