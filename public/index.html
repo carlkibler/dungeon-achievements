@@ -1151,10 +1151,10 @@
             }).join('');
             achievementsList.innerHTML = `
                 <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
-                    <button class="copy-btn" style="width:auto;" data-action="copy-all">📋 Copy all</button>
-                    <button class="copy-btn" style="width:auto;" data-action="image-all">🖼️ Image all</button>
+                    <button class="copy-btn" style="width:auto;" data-action="copy-all">📋 Copy all to Text</button>
+                    <button class="copy-btn" style="width:auto;" data-action="image-all">🖼️ Copy as 1 Image</button>
 
-                    ${canNativeShare ? '<button class="copy-btn" style="width:auto;" data-action="share-all">📤 Share all</button>' : ''}
+                    ${canNativeShare ? '<button class="copy-btn" style="width:auto;" data-action="share-all">📤 Share as 1 Image</button>' : ''}
                 </div>
                 ${cards}
             `;
@@ -1666,9 +1666,9 @@
                             ${entry.style && entry.style !== 'default' ? `<span style="margin-left:6px;color:#ffd70099;">[${entry.style}]</span>` : ''}
                         </div>
                         <div style="display:flex;gap:6px;flex-shrink:0;">
-                            <button class="copy-btn" style="width:auto;" data-action="copy-all" data-entry-idx="${entryIdx}">📋 Copy all</button>
-                            <button class="copy-btn" style="width:auto;" data-action="image-all" data-entry-idx="${entryIdx}">🖼️ Image all</button>
-                            ${canNativeShare ? `<button class="copy-btn" style="width:auto;" data-action="share-all" data-entry-idx="${entryIdx}">📤 Share all</button>` : ''}
+                            <button class="copy-btn" style="width:auto;" data-action="copy-all" data-entry-idx="${entryIdx}">📋 Copy all to Text</button>
+                            <button class="copy-btn" style="width:auto;" data-action="image-all" data-entry-idx="${entryIdx}">🖼️ Copy as 1 Image</button>
+                            ${canNativeShare ? `<button class="copy-btn" style="width:auto;" data-action="share-all" data-entry-idx="${entryIdx}">📤 Share as 1 Image</button>` : ''}
                         </div>
                     </div>
                     ${entry.achievements.map((ach) => {
