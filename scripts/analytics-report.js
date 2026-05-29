@@ -36,14 +36,18 @@ function costPerGen(model) {
 }
 
 function getToken() {
-    if (process.env.CLOUDFLARE_API_TOKEN) return process.env.CLOUDFLARE_API_TOKEN;
-    const secretsFile = path.join(process.env.HOME ?? '', '.secrets');
-    if (fs.existsSync(secretsFile)) {
-        const m = fs.readFileSync(secretsFile, 'utf8')
-            .match(/(?:export\s+)?CLOUDFLARE_API_TOKEN=["']?([^"'\n\r]+)["']?/);
+    // DA_CF_TOKEN is a scoped Analytics-Read-only CF token for this project.
+    // Generate it once with: source ~/.secrets && node scripts/provision-token.js
+    if (process.env.DA_CF_TOKEN) return process.env.DA_CF_TOKEN;
+    const envFile = path.join(__dirname, '..', '.env');
+    if (fs.existsSync(envFile)) {
+        const m = fs.readFileSync(envFile, 'utf8').match(/^DA_CF_TOKEN=(.+)$/m);
         if (m) return m[1].trim();
     }
-    throw new Error('CLOUDFLARE_API_TOKEN not found in env or ~/.secrets');
+    throw new Error(
+        'DA_CF_TOKEN not found.\n' +
+        'Run: source ~/.secrets && node scripts/provision-token.js'
+    );
 }
 
 function query(token, sql) {
