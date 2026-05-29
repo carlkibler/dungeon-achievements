@@ -6,6 +6,7 @@
     "dev": "wrangler pages dev public",
     "deploy": "wrangler pages deploy public",
     "typecheck": "tsc --noEmit",
+    "analytics": "node scripts/analytics-report.js",
     "postinstall": "node scripts/check-deps-age.js"
   },
   "dependencies": {
