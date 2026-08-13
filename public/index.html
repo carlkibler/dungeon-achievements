@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Crawler Carl Achievement Generator (DCC) — Dungeon Achievements</title>
+    <title>Dungeon Crawler Carl Achievement Generator (DCC) | Dungeon Achievements</title>
     <meta name="description" content="Type what you did and the System hands back three achievements in the voice of the trolling AI from Dungeon Crawler Carl (DCC). Free, instant, no signup.">
     <link rel="canonical" href="https://achievements.carlkibler.com/">
     <meta name="theme-color" content="#0b0906">
@@ -17,7 +17,7 @@
     <meta property="og:image" content="https://achievements.carlkibler.com/og.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Dungeon Achievements — a DCC-style achievement card reading Achievement Unlocked.">
+    <meta property="og:image:alt" content="Dungeon Achievements. A DCC-style card reading Achievement Unlocked.">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Dungeon Crawler Carl Achievement Generator (DCC)">
@@ -100,7 +100,7 @@
               "name": "What is Dungeon Achievements?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Dungeon Achievements turns anything you did — slaying a deadline, eating cereal for dinner, surviving a meeting — into three fake RPG achievements, each with a title, a description, and a reward. They are written in the sarcastic, all-seeing voice of the System AI from Dungeon Crawler Carl, the LitRPG series by Matt Dinniman that fans abbreviate as DCC. Pick a tone — default DCC snark, corporate, absurd, wholesome, brutal, pirate, or Shakespearean bard — and the System obliges. It is free, needs no account, and keeps your recent achievements only in your own browser."
+                "text": "Dungeon Achievements takes something you did, such as beating a deadline, eating cereal for dinner, or surviving a meeting, and gives you three fake RPG achievements. Each one has a title, description, and reward. The writing mimics the sarcastic System AI from Dungeon Crawler Carl, Matt Dinniman's LitRPG series commonly shortened to DCC. Choose default snark, corporate, absurd, wholesome, brutal, pirate, or Shakespearean bard. It is free, needs no account, and stores recent achievements only in your browser."
               }
             },
             {
@@ -141,7 +141,7 @@
     }
     </script>
 
-    <!-- Fonts: self-hosted — no external CDN requests -->
+    <!-- Fonts are self-hosted. No external CDN requests. -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/PressStart2P-Regular.woff2" crossorigin>
     <link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-variable.woff2" crossorigin>
     <link rel="preload" as="font" type="font/woff2" href="/fonts/cormorant-garamond-latin-400-italic.woff2" crossorigin>
@@ -193,7 +193,7 @@
             --c-line:         rgba(240, 232, 220, 0.10);
             --c-line-strong:  rgba(240, 232, 220, 0.16);
             --c-accent:       #ae724c;       /* iron-rust */
-            --c-accent-soft:  #c4845a;       /* phosphor-amber — AI voice */
+            --c-accent-soft:  #c4845a;       /* phosphor-amber for the AI voice */
             --c-amber:        #e6a674;       /* warm highlight */
             --c-rivet:        rgba(174, 114, 76, 0.6);  /* rivet dots */
         }
@@ -462,7 +462,7 @@
         .generate-btn {
             width: 100%;
             padding: 14px;
-            /* Lightened so dark ink clears AAA — cream-on-rust was 2.5:1, a hard fail. */
+            /* Lightened so dark ink clears AAA. Cream on rust was 2.5:1. */
             background: linear-gradient(135deg, #c4845a 0%, #e0a273 100%);
             border: none;
             border-radius: 7px;
@@ -633,7 +633,7 @@
             overflow: hidden;
         }
 
-        /* Loading console — 3-frame sequence */
+        /* Loading console with a 3-frame sequence */
         .loading-console {
             position: relative;
             z-index: 2;
@@ -678,7 +678,7 @@
             50% { opacity: 0.55; text-shadow: 0 0 16px rgba(196, 132, 90, 0.7); }
         }
 
-        /* Skeleton cards — shown while loading */
+        /* Skeleton cards shown while loading */
         .skeleton-cards {
             display: none;
             flex-direction: column;
@@ -748,7 +748,7 @@
         }
 
         /* Deliberately far below the app. The About/FAQ copy is for search engines
-           and first-time readers — it must never look like part of the generator. */
+           and first-time readers. It must never look like part of the generator. */
         .site-footer {
             margin-top: clamp(96px, 16vh, 168px);
             border-top: 1px solid var(--c-line);
@@ -855,7 +855,7 @@
         }
 
         /* Recent entries. Previously inline styles carrying a stray slate-blue border
-           (#4a5568) from an older palette — now on the Crawler Codex tokens. */
+           (#4a5568) from an older palette. These now use the Crawler Codex tokens. */
         .recent-entry {
             margin-bottom: 20px;
             padding: 14px;
@@ -988,7 +988,7 @@
             </h1>
             <p class="tagline">An achievement generator in the voice of the <strong>Dungeon Crawler Carl</strong> (DCC) System AI</p>
             <p class="subtitle">
-                The System is watching. Your deeds — heroic, mundane, or deeply questionable — are being logged. Describe what you did. Receive the achievements you deserve.
+                The System is watching. It logs heroic deeds, mundane chores, and questionable choices. Tell it what you did. It will decide what you deserve.
             </p>
         </header>
 
@@ -1042,14 +1042,13 @@
         <footer class="site-footer">
             <h2>About this generator</h2>
             <p>
-                <strong>Dungeon Achievements</strong> turns anything you did — slaying a deadline, eating cereal for
-                dinner, surviving a meeting — into three fake RPG achievements, each with a title, a description, and a
-                reward. They are written in the sarcastic, all-seeing voice of the System AI from
-                <strong>Dungeon Crawler Carl</strong>, the LitRPG series by
-                <a href="https://mattdinniman.com/" rel="noopener">Matt Dinniman</a> that fans abbreviate as
-                <strong>DCC</strong>. Pick a tone — default DCC snark, corporate, absurd, wholesome, brutal, pirate, or
-                Shakespearean bard — and the System obliges. It is free, needs no account, and keeps your recent
-                achievements only in your own browser.
+                <strong>Dungeon Achievements</strong> takes something you did, such as beating a deadline, eating cereal
+                for dinner, or surviving a meeting, and gives you three fake RPG achievements. Each one has a title,
+                description, and reward. The writing mimics the sarcastic System AI from
+                <strong>Dungeon Crawler Carl</strong>, <a href="https://mattdinniman.com/" rel="noopener">Matt
+                Dinniman's</a> LitRPG series commonly shortened to <strong>DCC</strong>. Choose default snark, corporate,
+                absurd, wholesome, brutal, pirate, or Shakespearean bard. It is free, needs no account, and stores recent
+                achievements only in your browser.
             </p>
 
             <h2>Go listen to the real thing</h2>
@@ -1057,32 +1056,29 @@
                 <li>
                     <a href="https://www.audible.com/series/Dungeon-Crawler-Carl-Audiobooks/B0937JMKYV" rel="noopener">The
                     Dungeon Crawler Carl audiobooks</a>
-                    <span>on Audible — Jeff Hays, solo, every book in the series.</span>
+                    <span>on Audible. Jeff Hays performs every book in the series.</span>
                 </li>
                 <li>
                     <a href="https://soundbooth.app/dungeon-crawler-carl" rel="noopener">Full cinematic versions</a>
-                    <span>on Soundbooth — full cast, original score, sound design.</span>
+                    <span>on Soundbooth, with a full cast, original score, and sound design.</span>
                 </li>
             </ul>
             <p>
-                The audiobooks are narrated by
-                <a href="https://soundbooththeater.com/team/jeff-hays/" rel="noopener">Jeff Hays</a>, and "narrated"
-                undersells it by a wide margin. He performs Carl, Donut, and the System AI — the voice this whole toy is
-                imitating — as fully separate, fully inhabited characters, somewhere north of two hundred of them. He is
-                the reason so many of us <em>hear</em> the AI instead of reading it. The man is incredible. Start with
-                book one and lose a weekend.
+                <a href="https://soundbooththeater.com/team/jeff-hays/" rel="noopener">Jeff Hays</a> narrates the
+                audiobooks, though "narrates" barely covers it. Carl, Donut, and the System AI sound like different
+                people. So do the hundreds of other characters. Start with book one and lose a weekend.
             </p>
             <p>
-                The cinematic version is the <strong>Audio Immersion Tunnel</strong> — the same story with a full cast,
-                sound design, an original score, guest performances from
+                The <strong>Audio Immersion Tunnel</strong> retells the same story with a full cast, sound design, an
+                original score, and guest performances from
                 <a href="https://www.andreaparsneau.com/" rel="noopener">Andrea Parsneau</a>,
                 <a href="https://www.travisbaldree.com/" rel="noopener">Travis Baldree</a>,
                 <a href="https://www.heathmiller.net/" rel="noopener">Heath Miller</a>, and
-                <a href="https://www.johnathanmcclain.com/" rel="noopener">Johnathan McClain</a>, plus bonus material
-                that isn't in the books — released episodically, one season per book. It lives on
-                <a href="https://soundbooth.app/dungeon-crawler-carl" rel="noopener">Soundbooth</a>, in the browser or
-                the app. Hays' studio, <a href="https://soundbooththeater.com/" rel="noopener">Soundbooth Theater</a>,
-                also put out a vinyl soundtrack and a USB-cassette edition if you want to go all the way down.
+                <a href="https://www.johnathanmcclain.com/" rel="noopener">Johnathan McClain</a>. It also includes bonus
+                material not found in the books. Listen on
+                <a href="https://soundbooth.app/dungeon-crawler-carl" rel="noopener">Soundbooth</a> in a browser or the
+                app. <a href="https://soundbooththeater.com/" rel="noopener">Soundbooth Theater</a> also sells a vinyl
+                soundtrack and a USB-cassette edition.
             </p>
 
             <div class="footer-faq">
@@ -1107,7 +1103,7 @@
                 <h3>Are these real Dungeon Crawler Carl achievements?</h3>
                 <p>
                     No. Every achievement here is newly generated for whatever you typed. Nothing is copied from the
-                    books — the goal is the <em>voice</em>, not the canon.
+                    books. The goal is the <em>voice</em>, not the canon.
                 </p>
 
                 <h3>Is this official or affiliated with Matt Dinniman?</h3>
@@ -1129,7 +1125,7 @@
             <p class="footer-legal">
                 Unofficial fan project. <em>Dungeon Crawler Carl</em> and all associated characters and concepts belong
                 to <a href="https://mattdinniman.com/" rel="noopener">Matt Dinniman</a>. Made by
-                <a href="https://carlkibler.com" rel="noopener">Carl Kibler</a> — a different
+                <a href="https://carlkibler.com" rel="noopener">Carl Kibler</a>, a different
                 Carl, statistically less doomed.
             </p>
         </footer>
@@ -1150,7 +1146,7 @@
             x => `${x} has been logged. You are owed:`,
             x => `For the act of ${x}, the record now shows:`,
             // sardonic
-            x => `${x} — a thing that happened. You receive:`,
+            x => `${x}. A thing that happened. You receive:`,
             x => `${x}. The AI has rendered its verdict:`,
             x => `For ${x}, which you apparently did on purpose:`,
             x => `The dungeon has reviewed ${x} and is choosing not to comment:`,
@@ -1160,7 +1156,7 @@
             x => `The ledger reflects ${x}. Compensation is as follows:`,
             // dramatic holdovers
             x => `In recognition of ${x}:`,
-            x => `For ${x} — behold:`,
+            x => `For ${x}, behold:`,
         ];
         function pickFramingLine(f) {
             return framingVariants[Math.floor(Math.random() * framingVariants.length)](f);
@@ -1180,7 +1176,7 @@
 
         const scrollBehavior = () => (prefersReducedMotion() ? 'auto' : 'smooth');
 
-        // Style picker — an ARIA radiogroup, so it announces "Brutal, radio button, 5 of 7"
+        // The ARIA radiogroup announces "Brutal, radio button, 5 of 7"
         // instead of seven unrelated buttons. Roving tabindex keeps it to one Tab stop;
         // arrow keys move between options the way native radios do.
         const stylePills = Array.from(document.querySelectorAll('.style-pill'));
@@ -1218,33 +1214,21 @@
         }
 
         const loadingMessages = [
-            '🔮 The Oracle stirs. It is reviewing your permanent record.',
-            '📜 Cross-referencing your deed against the Hall of Mediocrity...',
-            '👁️ The System sees you. It is not impressed. Yet.',
-            '⚙️ Converting your questionable choices into digital glory...',
-            '🎲 Rolling for cosmic judgment. The dice are judging you.',
-            '🧮 Calculating the exact magnitude of your achievement...',
-            '🌀 Translating mundane existence into epic terminology...',
-            '⚡ The AI is being brutally honest. This may take a moment.',
-            '🔭 Locating your deed in the Grand Ledger of Human Effort...',
-            '🏺 The Oracle has seen worse. Probably.',
-            '💀 Consulting the ancient achievement scrolls...',
-            '🎯 Precision-targeting your ego. Stand by.',
-            '🗂️ Accessing your file. Oh. Oh no. Accessing anyway.',
-            '📊 Question: Has anyone done this before? Answer: Yes. It did not end well.',
-            '⏳ The System is briefly distracted by something more interesting in Sector 7.',
-            '🌑 Initiating the Judgment Subroutines. This takes careful consideration.',
-            '☠️ Cross-referencing this against your 847 previous disappointments...',
-            '👁️ The All-Seeing Eye is buffering. Please hold.',
-            '🎪 Locating the least flattering interpretation of what you just did...',
-            '💫 The Oracle is reviewing your permanent record. It has opinions.',
-            '🩻 Performing a full spiritual X-ray. Results: concerning.',
-            '🔬 Analyzing the precise cocktail of hubris and optimism required to attempt this.',
-            '📡 Signal received. Evaluating whether you deserve acknowledgment. Jury is out.',
-            '⚗️ Distilling your mediocrity into something approaching achievement...',
-            '🌀 The dungeon AI has seen empires fall. It will judge your thing too.',
-            '🕯️ Consulting with previous crawlers who also did this. They said: yikes.',
-            '🧿 Peering into the temporal stream to see how this usually turns out. Loading...',
+            '📜 Opening your file. This was a mistake.',
+            '👁️ The System saw that.',
+            '🧮 Counting excuses.',
+            '⚖️ Checking if basic competence qualifies.',
+            '🗂️ Your permanent record is worse than expected.',
+            '🎲 Assigning a loot tier.',
+            '🔍 Looking for the flattering interpretation. Still looking.',
+            '📡 Deed received. Dignity not found.',
+            '⏳ Another crawler did this faster.',
+            '🏆 Deciding how little reward this deserves.',
+            '⚙️ Filing this under "Technically Counts."',
+            '☠️ Estimating how this gets you killed.',
+            '🧾 Preparing an insult with itemized deductions.',
+            '🔬 One detail here is bothering the System.',
+            '🚨 The reward committee has left the building.',
         ];
 
         // ===== LOADING EFFECTS =====
@@ -1616,7 +1600,7 @@
                     if (typeof a === 'string') return null;
                     const title = (a.title || '').replace(/^[\p{Emoji}\s]+/u, '').trim();
                     const firstSentence = (a.description || '').split(/[.!?]/)[0].trim().slice(0, 80);
-                    return title && firstSentence ? `${title} — ${firstSentence}` : null;
+                    return title && firstSentence ? `${title}: ${firstSentence}` : null;
                 })
                 .filter(Boolean)
                 .slice(0, 6);
@@ -1649,7 +1633,7 @@
             if (!input) {
                 // An inline role="alert" beats alert(): it announces itself, it doesn't
                 // trap focus, and it leaves the message on screen to refer back to.
-                inputError.textContent = 'Tell the System what you did first — the box is empty.';
+                inputError.textContent = 'Tell the System what you did first. The box is empty.';
                 inputError.hidden = false;
                 activityInput.setAttribute('aria-invalid', 'true');
                 activityInput.focus();
@@ -1673,8 +1657,8 @@
             achievementsSection.setAttribute('aria-busy', 'true');
             announce('Generating achievements. This usually takes a few seconds.');
 
-            // Build loading panel. The whole thing is aria-hidden: it is theatre — a
-            // typewriter echo, a dossier flash, and a verdict line that swaps every 3.5s.
+            // The loading panel is aria-hidden. Its typewriter echo, dossier flash,
+            // and changing verdict are visual theatre, not status text.
             // Announcing any of that would interrupt the user on a loop. The single
             // "Generating achievements" message above is what a screen reader gets.
             achievementsList.innerHTML = `
@@ -1693,7 +1677,7 @@
             const skCards = document.getElementById('skeletonCards');
             if (skCards) skCards.style.display = 'flex';
 
-            // Start visual FX — skipped entirely when the OS asks for reduced motion.
+            // Skip visual effects when the OS asks for reduced motion.
             stopEffect();
             const fxEl = document.getElementById('loadingFx');
             if (fxEl && !prefersReducedMotion()) activeEffect = FX[Math.floor(Math.random() * FX.length)](fxEl);
@@ -1709,7 +1693,7 @@
                 dossierEl.style.opacity = '1';
             }
 
-            // Frame 3: verdict cycle (3.5s cadence, not 2.2s — slower reads as deliberate)
+            // Frame 3 uses 3.5s. The slower cadence reads as deliberate.
             let verdictInterval = null;
             let msgIndex = Math.floor(Math.random() * loadingMessages.length);
             const verdictEl = document.getElementById('loadingVerdict');
@@ -1743,9 +1727,9 @@
                 clearInterval(verdictInterval);
                 stopEffect();
 
-                // Briefly surface the mood before clearing — gives a beat of character
+                // Briefly show the mood before clearing it.
                 if (data.mood && dossierEl) {
-                    const moodLabel = data.mood.includes(' — ') ? data.mood.split(' — ')[0] : data.mood.split(',')[0];
+                    const moodLabel = data.mood.includes('\u2014') ? data.mood.split('\u2014')[0].trim() : data.mood.split(',')[0];
                     dossierEl.textContent = `The AI is feeling: ${moodLabel}`;
                 }
                 await new Promise(r => setTimeout(r, 500));
@@ -1783,7 +1767,7 @@
             }
         }
 
-        // Titles carry a leading emoji. Strip it for spoken labels — screen readers
+        // Strip the leading emoji from spoken labels so screen readers
         // otherwise announce "trophy Schrodinger's Developer" on every single button.
         function plainTitle(achievement) {
             const raw = typeof achievement === 'string' ? achievement : (achievement?.title || '');
@@ -1865,7 +1849,7 @@
             if (!ach) return null;
             const framing = getFramingFor(scope, index);
             const framingLine = framing ? pickFramingLine(framing) : '';
-            const attribution = '— ⚔ achievements.carlkibler.com';
+            const attribution = '⚔ achievements.carlkibler.com';
             if (typeof ach === 'string') {
                 const text = (framingLine ? framingLine + '\n' : '') + ach + '\n' + attribution;
                 return { text, html: escapeHtml(text) };
@@ -1881,7 +1865,7 @@
         }
 
         async function copyToClipboard(btn, text, htmlContent) {
-            // innerHTML, not textContent — the buttons contain an aria-hidden emoji span.
+            // Use innerHTML because the buttons contain an aria-hidden emoji span.
             const orig = btn.innerHTML;
             const done = () => {
                 btn.innerHTML = '<span aria-hidden="true">✅</span> Done!';
@@ -2237,7 +2221,7 @@
             if (!achievements.length) return;
             const framing = framingOverride != null ? framingOverride : (currentFraming || document.getElementById('activityInput')?.value?.trim() || '');
             const framingLine = framing ? pickFramingLine(framing) : '';
-            const attribution = '— ⚔ achievements.carlkibler.com';
+            const attribution = '⚔ achievements.carlkibler.com';
             const achLines = achievements.map(ach => {
                 if (typeof ach === 'string') return ach;
                 return `${ach.title}\n${ach.description}\n${ach.reward}`;
@@ -2291,10 +2275,10 @@
                 const file = new File([blob], 'dca-achievement.png', { type: 'image/png' });
                 try {
                     if (navigator.canShare?.({ files: [file] })) {
-                        // Share image only — title/framing/watermark already rendered into the image.
+                        // The image already contains its title, framing, and watermark.
                         await navigator.share({ files: [file] });
                     } else {
-                        const shareText = (framing ? framing + '\n' : '') + '— ⚔ achievements.carlkibler.com';
+                        const shareText = (framing ? framing + '\n' : '') + '⚔ achievements.carlkibler.com';
                         await navigator.share({ text: shareText, url: 'https://achievements.carlkibler.com' });
                     }
                 } catch (err) {
@@ -2315,10 +2299,10 @@
                     const file = new File([blob], 'dca-achievements.png', { type: 'image/png' });
                     try {
                         if (navigator.canShare?.({ files: [file] })) {
-                            // Share image only — title/framing/watermark already rendered into the image.
+                            // The image already contains its title, framing, and watermark.
                             await navigator.share({ files: [file] });
                         } else {
-                            const shareText = (framing ? framing + '\n' : '') + '— ⚔ achievements.carlkibler.com';
+                            const shareText = (framing ? framing + '\n' : '') + '⚔ achievements.carlkibler.com';
                             await navigator.share({ text: shareText, url: 'https://achievements.carlkibler.com' });
                         }
                     } catch (err) {
@@ -2368,7 +2352,7 @@
                 <article class="recent-entry" aria-labelledby="recentEntry${entryIdx}">
                     <div class="recent-entry-head">
                         <h3 class="recent-entry-title" id="recentEntry${entryIdx}">
-                            "${escapeHtml(entry.activity)}" — <span class="recent-entry-date">${when}</span>
+                            "${escapeHtml(entry.activity)}" <span aria-hidden="true">·</span> <span class="recent-entry-date">${when}</span>
                             ${entry.style && entry.style !== 'default' ? `<span class="recent-entry-style">[${escapeHtml(entry.style)}]</span>` : ''}
                         </h3>
                         <div class="recent-entry-actions">
