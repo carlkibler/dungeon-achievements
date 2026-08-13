@@ -1,7 +1,0 @@
-{
-  "database": "dolt",
-  "backend": "dolt",
-  "dolt_mode": "embedded",
-  "dolt_database": "dungeon_achievements",
-  "project_id": "dbb66da8-c6ef-4788-986b-7cb8e1e9b489"
-}
