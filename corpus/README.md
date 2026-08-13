@@ -57,7 +57,7 @@ Common moves in the retrieved records:
 
 Useful corpus counts:
 
-- 83 rewards explicitly contain “Box.”
+- 84 rewards explicitly contain “Box.”
 - 20 rewards explicitly deny or negate a prize.
 - 32 titles use an exclamation mark; five use a question mark.
 - Deterministic tags identify at least 47 combat, 21 reward-denial, 19 authority, 17 death-risk,

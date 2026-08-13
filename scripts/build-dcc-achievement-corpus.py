@@ -24,7 +24,7 @@ def api(params: dict[str, str]) -> dict:
 
 
 def clean_wikitext(value: str) -> str:
-    value = re.sub(r"<!--.*?-->", "", value, flags=re.S)
+    value = re.sub(r"<!--.*?(?:-->|$)", "", value, flags=re.S)
     value = re.sub(r"<ref[^>]*>.*?</ref>", "", value, flags=re.I | re.S)
     value = re.sub(r"<[^>]+>", " ", value)
     value = re.sub(r"\{\{(?:cite|ref)\|[^{}]*\}\}", "", value, flags=re.I)

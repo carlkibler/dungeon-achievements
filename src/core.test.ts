@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { runWithFallback, type Provider } from './core';
+import {
+    buildPrompt, FORM_PROFILES, MOODS, runWithFallback, SNARK_LEVELS, type Provider,
+} from './core';
 
 const ok = (name: string): Provider<string> => ({ name, run: async () => `from-${name}` });
 const boom = (name: string, msg = 'exploded'): Provider<string> => ({
@@ -45,5 +47,26 @@ describe('runWithFallback', () => {
         const out = await runWithFallback([weird, ok('secondary')]);
         expect(out.failures).toEqual(['weird: plain string']);
         expect(out.degraded).toBe(true);
+    });
+});
+
+describe('achievement prompt', () => {
+    it('encodes corpus-derived structure without reusable placeholder jokes', () => {
+        const { prompt } = buildPrompt('washed the dishes', 'default', [], []);
+
+        expect(prompt).toContain('149 CANON ACHIEVEMENTS');
+        expect(prompt).toContain('Give one or two precisely named loot boxes');
+        expect(prompt).toContain('A Q&A is optional and uncommon');
+        expect(prompt).not.toContain('Lukewarm Participation Trophy');
+        expect(prompt).not.toContain('Dignity -7');
+        expect(prompt).not.toContain('{{');
+    });
+
+    it('keeps mood, snark, and form as independent variation axes', () => {
+        expect(MOODS).toHaveLength(7);
+        expect(SNARK_LEVELS).toHaveLength(5);
+        expect(FORM_PROFILES).toHaveLength(7);
+        expect(FORM_PROFILES.filter(profile => profile.startsWith('one Q&A'))).toHaveLength(1);
+        expect(MOODS.some(mood => mood.includes('tender'))).toBe(false);
     });
 });
