@@ -56,6 +56,8 @@ npm run deploy
 Wrangler prints your `.pages.dev` URL. Add a custom domain in the Cloudflare dashboard under **Workers & Pages → your project → Custom domains**.
 
 > Deploying from CI instead? Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in the environment and skip `wrangler login`. The token needs **Cloudflare Pages: Edit**.
+>
+> Prefer a scoped token locally? Put it in `.dev.vars` as `CLOUDFLARE_API_TOKEN` and use `make deploy`, which reads that file and ignores any token exported by your shell. That last part matters: a globally exported token without Pages:Edit otherwise wins silently and fails as an authentication error, which reads like a broken account rather than the wrong credential.
 
 **4. Make it yours**
 

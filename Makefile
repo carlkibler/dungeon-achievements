@@ -23,10 +23,32 @@ a11y:
 dev:
 	npx wrangler pages dev public
 
-# Uses the project deploy token from the macOS Keychain when it's there, and falls
-# back to whatever wrangler already has (`wrangler login`, or CLOUDFLARE_API_TOKEN).
+# Deploys with the project token from .dev.vars, the same file `make dev` reads.
+#
+# Exporting it here is not optional. A CLOUDFLARE_API_TOKEN exported globally from a
+# shell profile will otherwise win, and a token without Pages:Edit fails as an
+# "Authentication error [code: 10000]" against the projects endpoint — which reads as a
+# broken account, not as the wrong credential. The preflight below says which it is.
 deploy:
-	CLOUDFLARE_API_TOKEN=$(shell security find-generic-password -a cloudflare -s dungeon-achievements-pages -w 2>/dev/null) npx wrangler pages deploy public
+	@if [ ! -f .dev.vars ]; then \
+		echo "No .dev.vars. Copy .dev.vars.example and set CLOUDFLARE_API_TOKEN (needs Pages:Edit),"; \
+		echo "or run 'npm run deploy' to use an existing 'wrangler login' session."; \
+		exit 1; \
+	fi; \
+	unset CLOUDFLARE_API_TOKEN; \
+	set -a; . ./.dev.vars; set +a; \
+	if [ -z "$$CLOUDFLARE_API_TOKEN" ]; then \
+		echo "No CLOUDFLARE_API_TOKEN in .dev.vars. Add one with Cloudflare Pages:Edit,"; \
+		echo "or run 'npm run deploy' to use an existing 'wrangler login' session."; \
+		exit 1; \
+	fi; \
+	curl -sS https://api.cloudflare.com/client/v4/user/tokens/verify \
+		-H "Authorization: Bearer $$CLOUDFLARE_API_TOKEN" | grep -q '"success":true' || { \
+		echo "The CLOUDFLARE_API_TOKEN in .dev.vars is not valid. Rotate it in the CF dashboard."; \
+		exit 1; \
+	}; \
+	export CLOUDFLARE_API_TOKEN; \
+	npx wrangler pages deploy public
 
 secret:
 	npx wrangler pages secret put OPENROUTER_API_KEY

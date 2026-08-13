@@ -191,3 +191,10 @@ OPENROUTER_MODEL=anthropic/claude-haiku-4.5
 Hosted at https://achievements.carlkibler.com (CF Pages: https://dungeon-achievements.pages.dev)
 
 Secrets stored in Cloudflare Pages dashboard (not in wrangler.toml).
+
+**`make deploy` reads `CLOUDFLARE_API_TOKEN` from `.dev.vars` and explicitly unsets any inherited
+one first.** A token exported globally from a shell profile lacks Pages:Edit here and otherwise wins
+silently, failing as `Authentication error [code: 10000]` on the projects endpoint — which reads as a
+broken account, not the wrong credential. The recipe verifies the token before deploying and says
+which of the two is wrong. There is no Keychain entry for this project; the Makefile used to look for
+one that never existed, which is how the empty value let the ambient token through.

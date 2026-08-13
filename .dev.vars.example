@@ -7,3 +7,8 @@ OPENROUTER_API_KEY=sk-or-your-key-here
 # Optional: model to use (default: anthropic/claude-haiku-4.5)
 # Browse models at https://openrouter.ai/models
 OPENROUTER_MODEL=anthropic/claude-haiku-4.5
+
+# Optional: deploy token used by `make deploy`, needs Cloudflare Pages: Edit.
+# Only needed if you deploy with a scoped token instead of `wrangler login`
+# (which is what plain `npm run deploy` uses).
+# CLOUDFLARE_API_TOKEN=
