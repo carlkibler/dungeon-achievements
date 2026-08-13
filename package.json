@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "wrangler pages dev public",
     "deploy": "CLOUDFLARE_API_TOKEN=$(security find-generic-password -a cloudflare -s dungeon-achievements-pages -w) wrangler pages deploy public",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
     "analytics": "node scripts/analytics-report.js",
     "provision-token": "node scripts/provision-token.js",
@@ -17,6 +18,7 @@
     "@cloudflare/workers-types": "^4.20240924.0",
     "@types/node": "^25.9.1",
     "typescript": "^5.1.6",
+    "vitest": "^4.1.10",
     "wrangler": "^4.80.0"
   },
   "license": "MIT"

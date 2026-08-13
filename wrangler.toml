@@ -6,6 +6,11 @@ compatibility_date = "2024-09-23"
 binding = "ANALYTICS"
 dataset = "da_generate_events"
 
+# Runtime fallback: if OpenRouter fails, /generate retries on Workers AI before
+# giving up and serving canned achievements. Free tier covers this site's volume.
+[ai]
+binding = "AI"
+
 # Secrets (set via `wrangler pages secret put OPENROUTER_API_KEY`):
 # OPENROUTER_API_KEY      -- required
 # OPENROUTER_MODEL        -- optional, defaults to anthropic/claude-haiku-4.5

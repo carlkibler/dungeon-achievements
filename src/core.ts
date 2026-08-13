@@ -21,6 +21,46 @@ export interface GenerateResult {
 }
 
 // ---------------------------------------------------------------------------
+// Provider fallback
+// ---------------------------------------------------------------------------
+
+export interface Provider<T> {
+    name: string;
+    run: () => Promise<T>;
+}
+
+export interface FallbackOutcome<T> {
+    value: T;
+    provider: string;
+    /** True when an earlier provider failed — the caller is serving second-choice output. */
+    degraded: boolean;
+    failures: string[];
+}
+
+/**
+ * Try providers in order, returning the first success. Exists because a provider
+ * failing (retired model slug, outage) must not collapse straight to canned text
+ * while still returning HTTP 200 — that failure mode is invisible in monitoring.
+ */
+export async function runWithFallback<T>(providers: Provider<T>[]): Promise<FallbackOutcome<T>> {
+    if (providers.length === 0) {
+        throw new Error('no AI provider configured: set OPENROUTER_API_KEY or add an [ai] binding');
+    }
+
+    const failures: string[] = [];
+    for (const provider of providers) {
+        try {
+            const value = await provider.run();
+            return { value, provider: provider.name, degraded: failures.length > 0, failures };
+        } catch (err) {
+            failures.push(`${provider.name}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+
+    throw new Error(`all AI providers failed — ${failures.join('; ')}`);
+}
+
+// ---------------------------------------------------------------------------
 // Prompt template
 // ---------------------------------------------------------------------------
 

@@ -20,7 +20,8 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - `prompts/` directory kept as source-of-truth reference for prompt editing
 
 **API:**
-- `POST /generate` — body `{ activity: string, style?: string, recentTitles?: string[] }` → `{ achievements: Achievement[], mood: string, timestamp: string }` where `Achievement = { title, description, reward }` (always 3).
+- `POST /generate` — body `{ activity: string, style?: string, recentTitles?: string[] }` → `{ achievements: Achievement[], mood: string, framing: string, degraded: boolean, timestamp: string }` where `Achievement = { title, description, reward }` (always 3). `activity` is capped at 500 chars (`400` past that).
+- **`degraded: true` means you are not getting primary-model output** — either Workers AI served the request after OpenRouter failed, or all providers failed and these are the canned `FALLBACK_ACHIEVEMENTS`. This is the monitoring hook; watch it.
 - `OPTIONS /generate` — CORS preflight (`Access-Control-Allow-Origin: *`).
 - OpenRouter call uses the `openai` SDK pointed at `https://openrouter.ai/api/v1`; sends `HTTP-Referer` + `X-Title` headers; `temperature: 0.9`, `max_tokens: 2000`.
 
@@ -33,7 +34,10 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - **`README.md` is stale** — describes the old AWS Bedrock/Lambda/SAM stack. Trust this file and the code, not the README.
 - **Variety knobs are server-side** — each request rolls a random `mood` (committed for all 3 achievements), a `seedPhrase`, and optionally applies a `recentTitles` Forbidden Words List. See `MOODS`, `SEED_PHRASES`, `buildForbiddenBlock` in `functions/generate.ts`. Response includes `mood` and `moodLabel` strings used by the loading sequence.
 - **Two base prompts exist and diverge.** The runtime prompt is the `BASE_TEMPLATE` const inside `functions/generate.ts`. The files under `prompts/` are not loaded — they're an older reference snapshot. Edit the inlined string.
-- **Backend never returns 5xx for AI/parsing failures.** On any OpenRouter or JSON-parse error it returns 200 with three hardcoded `FALLBACK_ACHIEVEMENTS`. The only real error response is `400` for missing/empty `activity`.
+- **Backend never returns 5xx for AI/parsing failures.** It returns 200 with `FALLBACK_ACHIEVEMENTS`. The only real error responses are `400` (missing/empty or over-long `activity`). Because a broken site still returns 200 with plausible JSON, **uptime checks cannot detect an outage here** — check the `degraded` flag instead. This exact blind spot hid a full outage from 2026-05-28 to 2026-08-12.
+- **Provider chain is OpenRouter → Workers AI → canned.** `runWithFallback` in `src/core.ts` (unit-tested) tries each in order; `degraded` is true if the first choice failed. Workers AI needs no key — it uses the `[ai]` binding in `wrangler.toml`.
+- **Model slugs rot, and both providers have bitten us.** OpenRouter retired `anthropic/claude-3-5-haiku`; Workers AI renamed `@cf/meta/llama-3.1-8b-instruct` to `-fp8`. When output goes generic, re-check the slug against `https://openrouter.ai/api/v1/models` or `GET /accounts/{id}/ai/models/search`.
+- **Workers AI returns two response shapes.** Classic models give `{ response }`; OpenAI-compatible ones (`gpt-oss`, reasoning models) give `{ choices[0].message.content }`, and reasoning models can return `content: null`. `callWorkersAI` reads both and throws on empty. The account is on the **Workers Free plan** — premium models like `@cf/zai-org/glm-5.2` return an availability error.
 - **`public/html2canvas.min.js` is unused.** Image export uses a custom `drawAchievementCanvas()` (Canvas API) — html2canvas was left behind from an earlier approach.
 
 ## Commands

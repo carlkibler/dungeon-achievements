@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 import {
-    buildPrompt, parseAchievements,
+    buildPrompt, parseAchievements, runWithFallback,
     FALLBACK_ACHIEVEMENTS, FALLBACK_MOOD,
-    type Achievement, type GenerateRequest,
+    type Achievement, type GenerateRequest, type Provider,
 } from '../src/core';
 
 interface Env {
@@ -14,37 +14,58 @@ interface Env {
     ANALYTICS?: AnalyticsEngineDataset;
 }
 
-async function callLLM(prompt: string, env: Env): Promise<{ text: string; model: string }> {
-    if (env.OPENROUTER_API_KEY) {
-        const client = new OpenAI({
-            baseURL: 'https://openrouter.ai/api/v1',
-            apiKey: env.OPENROUTER_API_KEY,
-            defaultHeaders: {
-                'HTTP-Referer': 'https://dungeon-achievements.pages.dev',
-                'X-Title': 'Dungeon Achievements Generator',
-            },
-        });
-        const model = env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5';
-        const message = await client.chat.completions.create({
-            model,
-            max_tokens: 2000,
-            temperature: 0.9,
-            seed: Math.floor(Math.random() * 2147483647),
-            messages: [{ role: 'user', content: prompt }],
-        });
-        return { text: message.choices[0]?.message?.content ?? '', model };
-    }
+interface LLMOutput { text: string; model: string }
 
-    if (env.AI) {
-        const model = env.CF_AI_MODEL ?? '@cf/meta/llama-3.1-8b-instruct';
-        const result = await env.AI.run(model, {
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 2000,
-        }) as { response?: string };
-        return { text: result.response ?? '', model };
-    }
+async function callOpenRouter(prompt: string, env: Env): Promise<LLMOutput> {
+    const client = new OpenAI({
+        baseURL: 'https://openrouter.ai/api/v1',
+        apiKey: env.OPENROUTER_API_KEY,
+        defaultHeaders: {
+            'HTTP-Referer': 'https://dungeon-achievements.pages.dev',
+            'X-Title': 'Dungeon Achievements Generator',
+        },
+    });
+    const model = env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5';
+    const message = await client.chat.completions.create({
+        model,
+        max_tokens: 2000,
+        temperature: 0.9,
+        seed: Math.floor(Math.random() * 2147483647),
+        messages: [{ role: 'user', content: prompt }],
+    });
+    return { text: message.choices[0]?.message?.content ?? '', model };
+}
 
-    throw new Error('No AI provider configured: set OPENROUTER_API_KEY or add an [ai] binding in wrangler.toml');
+/**
+ * Workers AI returns two different shapes depending on the model: classic
+ * text-generation models give `{ response }`, OpenAI-compatible ones (gpt-oss,
+ * reasoning models) give `{ choices: [{ message: { content } }] }`. Read both —
+ * guessing wrong yields empty text, which degrades to canned output silently.
+ */
+async function callWorkersAI(prompt: string, env: Env): Promise<LLMOutput> {
+    const model = env.CF_AI_MODEL ?? '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+    const result = await env.AI!.run(model, {
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 2000,
+    }) as { response?: string; choices?: Array<{ message?: { content?: string | null } }> };
+
+    const text = result.response ?? result.choices?.[0]?.message?.content ?? '';
+    if (!text.trim()) {
+        throw new Error(`workers-ai returned empty text for ${model}`);
+    }
+    return { text, model };
+}
+
+async function callLLM(prompt: string, env: Env): Promise<LLMOutput & { degraded: boolean }> {
+    const providers: Provider<LLMOutput>[] = [];
+    if (env.OPENROUTER_API_KEY) providers.push({ name: 'openrouter', run: () => callOpenRouter(prompt, env) });
+    if (env.AI) providers.push({ name: 'workers-ai', run: () => callWorkersAI(prompt, env) });
+
+    const { value, provider, degraded, failures } = await runWithFallback(providers);
+    if (failures.length > 0) {
+        console.error('AI provider fallback engaged', { served_by: provider, model: value.model, failures });
+    }
+    return { ...value, degraded };
 }
 
 function writeAnalytics(
@@ -112,23 +133,27 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         let success = true;
         let framingReturned = false;
         let model = 'unknown';
+        let degraded = false;
 
         try {
-            const { text, model: usedModel } = await callLLM(prompt, env);
+            const { text, model: usedModel, degraded: usedFallbackProvider } = await callLLM(prompt, env);
             model = usedModel;
+            degraded = usedFallbackProvider;
             const parsed = parseAchievements(text);
             achievements = parsed.achievements;
             if (parsed.framing) { framing = parsed.framing; framingReturned = true; }
-            if (achievements.length === 0) { achievements = FALLBACK_ACHIEVEMENTS; success = false; }
-        } catch {
+            if (achievements.length === 0) { achievements = FALLBACK_ACHIEVEMENTS; success = false; degraded = true; }
+        } catch (err) {
+            console.error('All AI providers failed; serving canned achievements', { error: String(err) });
             achievements = FALLBACK_ACHIEVEMENTS;
             success = false;
+            degraded = true;
         }
 
         writeAnalytics(env, style, model, success, framingReturned, hasRecentHistory, Date.now() - t0, activityLength, achievements.length, country);
 
         return Response.json(
-            { achievements, mood, framing, timestamp: new Date().toISOString() },
+            { achievements, mood, framing, degraded, timestamp: new Date().toISOString() },
             { headers: corsHeaders }
         );
 
@@ -136,7 +161,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         console.error('Error generating achievements:', error);
         writeAnalytics(env, 'unknown', 'unknown', false, false, false, Date.now() - t0, 0, 0, country);
         return Response.json(
-            { achievements: FALLBACK_ACHIEVEMENTS, mood: FALLBACK_MOOD, framing: '', timestamp: new Date().toISOString() },
+            { achievements: FALLBACK_ACHIEVEMENTS, mood: FALLBACK_MOOD, framing: '', degraded: true, timestamp: new Date().toISOString() },
             { headers: corsHeaders }
         );
     }
