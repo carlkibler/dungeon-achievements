@@ -7,7 +7,7 @@
 //
 // Env vars:
 //   OPENROUTER_API_KEY   required
-//   OPENROUTER_MODEL     optional, default: anthropic/claude-3-5-haiku
+//   OPENROUTER_MODEL     optional, default: anthropic/claude-haiku-4.5
 //   PORT                 optional, default: 8787
 
 import { createServer, IncomingMessage, ServerResponse } from 'http';
@@ -16,7 +16,7 @@ import { buildPrompt, parseAchievements, FALLBACK_ACHIEVEMENTS, FALLBACK_MOOD, t
 
 const PORT = parseInt(process.env.PORT ?? '8787', 10);
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'anthropic/claude-3-5-haiku';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5';
 
 if (!OPENROUTER_API_KEY) {
     console.error('OPENROUTER_API_KEY is required');

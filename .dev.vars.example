@@ -4,6 +4,6 @@
 # Required: OpenRouter API key (https://openrouter.ai/keys)
 OPENROUTER_API_KEY=sk-or-your-key-here
 
-# Optional: model to use (default: anthropic/claude-3-5-haiku)
+# Optional: model to use (default: anthropic/claude-haiku-4.5)
 # Browse models at https://openrouter.ai/models
-OPENROUTER_MODEL=anthropic/claude-3-5-haiku
+OPENROUTER_MODEL=anthropic/claude-haiku-4.5

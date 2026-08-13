@@ -8,4 +8,4 @@ dataset = "da_generate_events"
 
 # Secrets (set via `wrangler pages secret put OPENROUTER_API_KEY`):
 # OPENROUTER_API_KEY      -- required
-# OPENROUTER_MODEL        -- optional, defaults to anthropic/claude-3-5-haiku
+# OPENROUTER_MODEL        -- optional, defaults to anthropic/claude-haiku-4.5

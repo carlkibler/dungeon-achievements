@@ -8,7 +8,7 @@ import {
 interface Env {
     // Provider — set one. OPENROUTER_API_KEY takes precedence; AI binding is the zero-config CF fallback.
     OPENROUTER_API_KEY?: string;
-    OPENROUTER_MODEL?: string;   // default: anthropic/claude-3-5-haiku
+    OPENROUTER_MODEL?: string;   // default: anthropic/claude-haiku-4.5
     AI?: Ai;                     // Cloudflare Workers AI binding (wrangler.toml: [ai] binding = "AI")
     CF_AI_MODEL?: string;        // default: @cf/meta/llama-3.1-8b-instruct
     ANALYTICS?: AnalyticsEngineDataset;
@@ -24,7 +24,7 @@ async function callLLM(prompt: string, env: Env): Promise<{ text: string; model:
                 'X-Title': 'Dungeon Achievements Generator',
             },
         });
-        const model = env.OPENROUTER_MODEL ?? 'anthropic/claude-3-5-haiku';
+        const model = env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5';
         const message = await client.chat.completions.create({
             model,
             max_tokens: 2000,
@@ -86,6 +86,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         if (!body.activity?.trim()) {
             return Response.json({ error: 'Activity is required' }, { status: 400, headers: corsHeaders });
+        }
+
+        const MAX_ACTIVITY = 500;
+        if (body.activity.length > MAX_ACTIVITY) {
+            return Response.json(
+                { error: `Activity too long (max ${MAX_ACTIVITY} characters)` },
+                { status: 400, headers: corsHeaders },
+            );
         }
 
         const activityLength = body.activity.trim().length;
