@@ -46,6 +46,8 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - **Model slugs rot, and both providers have bitten us.** OpenRouter retired `anthropic/claude-3-5-haiku`; Workers AI renamed `@cf/meta/llama-3.1-8b-instruct` to `-fp8`. When output goes generic, re-check the slug against `https://openrouter.ai/api/v1/models` or `GET /accounts/{id}/ai/models/search`.
 - **Workers AI returns two response shapes.** Classic models give `{ response }`; OpenAI-compatible ones (`gpt-oss`, reasoning models) give `{ choices[0].message.content }`, and reasoning models can return `content: null`. `callWorkersAI` reads both and throws on empty. The account is on the **Workers Free plan** — premium models like `@cf/zai-org/glm-5.2` return an availability error.
 - **`public/html2canvas.min.js` is unused.** Image export uses a custom `drawAchievementCanvas()` (Canvas API) — html2canvas was left behind from an earlier approach.
+- **Justif owns justified prose, and its two halves are wired differently.** The vendored `auto.js` in `<head>` carries `data-justif-selector=".site-footer p"` and scans once at DOM ready. Achievement cards don't exist yet, so `rejustifyCards()` handles every `.achievement-desc` after each render, tracked in `justifController`. Adding a justified block means deciding which half owns it.
+- **A justified card paragraph pins the width of its flex cell, and Justif cannot recover on its own.** Its resize path re-measures the paragraph, but that measurement never changes, so the page keeps scrolling sideways below ~900px. The `ResizeObserver` on `<main>` destroys and rebuilds instead — `refresh()` does *not* fix it, only destroy + re-justify does. `make a11y`'s reflow sweep is what catches a regression here.
 
 ## Dependencies
 
@@ -61,6 +63,10 @@ newest match is always too fresh. Before this was pinned, a plain `npm install` 
 - `wrangler` and `@cloudflare/workers-types` must move together — wrangler declares the matching
   types package as a peer dependency, and mismatched majors fail `npm install` outright.
 - `package-lock.json` is gitignored, so `npm ci` is not available here; `npm install` is the entry point.
+- **`justif` is a devDependency but ships to the browser.** The site loads `public/vendor/justif/auto.js`,
+  not `node_modules`, so bumping the pinned version without re-copying would silently keep serving the
+  old build. `scripts/check-vendor.mjs` (`make vendor`) compares hashes and fails; `npm run vendor:justif`
+  re-copies. Only `auto.js` is vendored — it inlines en-US hyphenation and the site is English-only.
 
 ## Commands
 
@@ -71,6 +77,7 @@ make secret     # set OPENROUTER_API_KEY in CF
 make typecheck  # TypeScript type checking
 make seo        # metadata, DCC keywords, FAQ/JSON-LD sync, og.png, robots, sitemap
 make a11y       # axe + keyboard/focus + reflow (needs `make dev` running)
+make vendor     # public/vendor/ still matches the pinned package
 npm test        # vitest — provider fallback chain and parsing
 ```
 
@@ -82,6 +89,7 @@ public/
 ├── robots.txt          # Allows all; points at sitemap
 ├── sitemap.xml         # Single URL — bump <lastmod> on meaningful content changes
 ├── og.png              # 1200x630 social card (regenerate: see SEO note below)
+├── vendor/justif/      # Vendored Justif auto.js (TeX line breaking). Sync guard: `make vendor`.
 └── fonts/              # Self-hosted woff2 (no CDN). Add <link rel=preload> + @font-face for any new file.
     ├── PressStart2P-Regular.woff2    # Page title (pixel)
     ├── outfit-variable.woff2         # Body / UI
@@ -97,6 +105,7 @@ server.ts               # Node adapter (API only — no static files, no degrade
 scripts/
 ├── check-seo.mjs       # Guards metadata + FAQ/JSON-LD sync (no deps)
 ├── check-a11y.mjs      # axe + keyboard/focus + reflow (needs playwright)
+├── check-vendor.mjs    # public/vendor/ vs the pinned package (no deps)
 ├── check-deps-age.js   # 14-day supply-chain cooldown, runs on postinstall
 ├── analytics-report.js # CLI analytics dashboard
 └── provision-token.js  # Creates a scoped CF token for analytics

@@ -156,9 +156,11 @@ Model slugs rot. Both providers have retired one out from under this project, an
 | `npm run typecheck` | Type-check CF and Node configs |
 | `npm run check:seo` | Metadata, DCC keywords, FAQ/JSON-LD sync, og.png, robots, sitemap |
 | `npm run check:a11y` | axe-core + keyboard/focus + reflow (needs `npm run dev` running) |
+| `npm run check:vendor` | Confirms `public/vendor/` matches the pinned package |
+| `npm run vendor:justif` | Re-copies Justif from `node_modules` into `public/vendor/` |
 | `npm run analytics` | Print a usage report (requires `CF_ACCOUNT_ID` in `.env`) |
 
-`make` wraps the same things (`make dev`, `make deploy`, `make seo`, `make a11y`, `make help`).
+`make` wraps the same things (`make dev`, `make deploy`, `make seo`, `make a11y`, `make vendor`, `make help`).
 
 `check:a11y` needs a browser binary once: `npx playwright install chromium`.
 
@@ -218,6 +220,7 @@ server.ts              Node.js HTTP adapter (same core, no CF dependency)
 public/
   index.html           Entire frontend — HTML, CSS, JS, no build step
   fonts/               Self-hosted woff2 fonts (no CDN requests)
+  vendor/justif/       Vendored Justif build — TeX line breaking for justified prose
   og.png               1200x630 social card
   robots.txt           Crawl rules; points at the sitemap
   sitemap.xml          One URL, for search engines
@@ -225,6 +228,7 @@ scripts/
   check-seo.mjs        Guards metadata, DCC keywords, FAQ/JSON-LD sync
   check-a11y.mjs       axe-core + keyboard/focus + reflow checks
   check-deps-age.js    Refuses dependencies published in the last 14 days
+  check-vendor.mjs     Fails if public/vendor/ drifts from the pinned package
   analytics-report.js  CLI analytics dashboard
   provision-token.js   Creates a scoped CF token for analytics
 corpus/                Source-linked DCC achievements used to tune the prompt
@@ -234,7 +238,20 @@ docs/                  Design notes and prompt-refinement history
 wrangler.toml          Cloudflare Pages config
 ```
 
-Everything the browser runs lives in one file. There is no build step, no bundler, and no CDN request — the fonts are self-hosted and the JS is inline.
+There is no build step, no bundler, and no CDN request. The app itself is one file; the fonts and the one third-party script (Justif) are served from this origin.
+
+---
+
+## Typography
+
+The footer prose and the achievement descriptions are set justified, and [Justif](https://justif.lyall.co) re-breaks them with the Knuth–Plass algorithm — the one TeX uses. Browsers justify one line at a time, which is how you get rivers of whitespace down a paragraph. Justif looks at the paragraph whole, hyphenates, and hangs punctuation into the margin.
+
+It is progressive enhancement. If the script fails to load, the CSS `text-align: justify` and `hyphens: auto` underneath still render fine, just less evenly. The build is vendored into `public/vendor/justif/` rather than pulled from a CDN, matching the fonts; `npm run check:vendor` fails the moment that copy drifts from the pinned package.
+
+Two things to know before you touch it:
+
+- **The `<head>` script only scans `.site-footer p`.** Achievement cards don't exist at DOM ready, so `rejustifyCards()` in `index.html` handles them on every render.
+- **A justified card paragraph pins the width of the flex cell holding it.** Justif's own resize handling can't recover from that — the width it re-measures never changes — so a `ResizeObserver` on `<main>` tears the layout down and rebuilds it. Remove that and the page scrolls sideways below about 900px.
 
 ---
 

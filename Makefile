@@ -1,4 +1,4 @@
-.PHONY: dev deploy secret typecheck seo a11y open help
+.PHONY: dev deploy secret typecheck seo a11y vendor open help
 
 help:
 	@echo "dev       - local dev server (uses .dev.vars)"
@@ -7,10 +7,14 @@ help:
 	@echo "typecheck - run TypeScript type checking"
 	@echo "seo       - check metadata, DCC keywords, FAQ/JSON-LD sync, og.png"
 	@echo "a11y      - axe + keyboard/focus + reflow checks (needs 'make dev' running)"
+	@echo "vendor    - check public/vendor/ matches the pinned package"
 	@echo "open      - open the deployed site"
 
 seo:
 	node scripts/check-seo.mjs
+
+vendor:
+	node scripts/check-vendor.mjs
 
 # Needs a dev server on :8788. Run `make dev` in another terminal first.
 a11y:

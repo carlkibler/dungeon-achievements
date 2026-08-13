@@ -145,6 +145,13 @@
     <link rel="preload" as="font" type="font/woff2" href="/fonts/PressStart2P-Regular.woff2" crossorigin>
     <link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-variable.woff2" crossorigin>
     <link rel="preload" as="font" type="font/woff2" href="/fonts/cormorant-garamond-latin-400-italic.woff2" crossorigin>
+
+    <!-- Justif re-breaks justified prose with TeX line breaking, so the footer and the
+         achievement descriptions get even spacing instead of native rivers. Self-hosted
+         like the fonts. Not render-blocking: nothing justified is above the fold, so the
+         slower first paint would buy nothing. If it fails to load, CSS justification stands. -->
+    <script type="module" src="/vendor/justif/auto.js"
+            data-justif-selector=".site-footer p"></script>
     <style>
         @font-face {
             font-family: 'Press Start 2P';
@@ -532,10 +539,15 @@
             word-spacing: 0.2em;
         }
 
+        /* Justified because Justif re-breaks it (see the vendor script in <head>).
+           `hyphens: auto` is the fallback for browsers Justif skips, where native
+           justification at this measure would open rivers instead of closing them. */
         .achievement-desc {
             margin-bottom: 10px;
             line-height: 1.65;
             color: var(--c-ink);
+            text-align: justify;
+            hyphens: auto;
         }
 
         .achievement-reward {
@@ -788,6 +800,8 @@
         .site-footer p {
             margin-bottom: 18px;
             max-width: 68ch;
+            text-align: justify;
+            hyphens: auto;
         }
 
         .site-footer a {
@@ -1802,6 +1816,44 @@
                 </div>`;
         }
 
+        // The auto script scans once at DOM ready, and it is scoped to the footer for that
+        // reason: achievement cards do not exist yet. They get justified here instead, on
+        // every render. Destroy first — a live controller holds observers on cards that
+        // innerHTML has already thrown away.
+        let justifController = null;
+        let rejustifyPending = null;
+        async function rejustifyCards() {
+            const justif = window.justif;
+            if (!justif) return;   // module blocked or unsupported; CSS justification stands
+            // Serialise: a destroy() landing inside another call's justify() corrupts both.
+            rejustifyPending = (rejustifyPending ?? justif.booted).then(async () => {
+                justifController?.destroy();
+                justifController = null;
+                const paragraphs = document.querySelectorAll('.achievement-desc');
+                if (paragraphs.length) justifController = justif.justify(paragraphs);
+                lastCardWidth = cardMeasure();
+            }).catch((error) => {
+                // A rejection here would poison the chain and silently disable every later
+                // call. Swallow it, keep the chain alive, and let CSS justification stand.
+                console.warn('Justif layout failed; using native justification', error);
+                justifController = null;
+            });
+            return rejustifyPending;
+        }
+
+        // Justif re-measures the paragraphs it manages, but a laid-out card paragraph pins
+        // the width of the flex cell holding it. The width Justif observes therefore never
+        // changes and its own resize path cannot recover — the page just keeps scrolling
+        // sideways. Watch <main> and rebuild from scratch: it is never pinned and never
+        // display:none, unlike the results list on a load that only has history to show.
+        const cardMeasure = () => Math.round(document.getElementById('main').getBoundingClientRect().width);
+        let lastCardWidth = cardMeasure();
+        new ResizeObserver(() => {
+            if (!justifController || cardMeasure() === lastCardWidth) return;
+            lastCardWidth = cardMeasure();
+            rejustifyCards();
+        }).observe(document.getElementById('main'));
+
         function displayAchievements(achievements) {
             currentAchievements = achievements;
 
@@ -1828,6 +1880,8 @@
                 </div>
                 <ul class="achievement-list">${cards}</ul>
             `;
+
+            rejustifyCards();
         }
 
         // `level` keeps the heading outline legal: achievement titles sit at h3 in the
@@ -2387,6 +2441,8 @@
                 </article>
             `;
             }).join('');
+
+            rejustifyCards();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
