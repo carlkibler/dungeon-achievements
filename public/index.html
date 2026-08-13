@@ -521,6 +521,7 @@
                 id="activityInput"
                 class="input-field"
                 placeholder="e.g., Made coffee this morning, Survived a Zoom meeting, Finished a project..."
+                maxlength="500"
             ></textarea>
 
             <div class="style-selector">
@@ -1311,8 +1312,16 @@
             const FONT_SMALL = "13px Consolas, Monaco, 'Lucida Console', monospace";
             const FONT_FRAMING = "12px Consolas, Monaco, 'Lucida Console', monospace";
             const LINE = 22;
-            const FRAMING_H = framing ? 22 : 0;
-            const WATERMARK_H = noWatermark ? 0 : 20;
+            const WATERMARK_H = noWatermark ? 0 : 22;
+            const FRAMING_LINE_H = 16;
+            // Wrap the framing line (~70% of card width) so long activities break cleanly,
+            // centered, instead of overflowing a single line and clipping at both edges.
+            let framingLines = [];
+            if (framing) {
+                ctx.font = FONT_FRAMING;
+                framingLines = wrapText(ctx, pickFramingLine(framing), inner * 0.7);
+            }
+            const FRAMING_H = framing ? framingLines.length * FRAMING_LINE_H + 8 : 0;
 
             // Measure text for height calculation
             ctx.font = FONT_TITLE;
@@ -1342,7 +1351,8 @@
                 ctx.font = FONT_FRAMING;
                 ctx.fillStyle = 'rgba(230,166,116,0.65)';
                 ctx.textAlign = 'center';
-                ctx.fillText(pickFramingLine(framing), W / 2, FRAMING_H - 6);
+                let fy = FRAMING_LINE_H - 2;
+                for (const line of framingLines) { ctx.fillText(line, W / 2, fy); fy += FRAMING_LINE_H; }
                 ctx.textAlign = 'left';
             }
 
@@ -1401,9 +1411,9 @@
             // Watermark
             if (!noWatermark) {
                 ctx.font = '11px Consolas, Monaco, monospace';
-                ctx.fillStyle = 'rgba(184,158,138,0.45)';
+                ctx.fillStyle = 'rgba(200,172,150,0.6)';
                 ctx.textAlign = 'center';
-                ctx.fillText('achievements.carlkibler.com', W / 2, totalH - 6);
+                ctx.fillText('achievements.carlkibler.com', W / 2, totalH - 8);
             }
 
             return canvas;
@@ -1413,18 +1423,29 @@
             const scale = 2;
             const W = 600;
             const GAP = 10;
-            const FRAMING_H = 28;
-            const WATERMARK_H = 20;
+            const WATERMARK_H = 22;
+            const FRAMING_LINE_H = 18;
+            const FRAMING_FONT = "13px Consolas, Monaco, 'Lucida Console', monospace";
+            const maxFramingW = (W - 64) * 0.7;
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Wrap the framing header (~70% of card width) so long activities break cleanly, centered.
+            let framingLines = [];
+            if (framing) {
+                ctx.font = FRAMING_FONT;
+                framingLines = wrapText(ctx, pickFramingLine(framing), maxFramingW);
+            }
+            const FRAMING_H = (framing ? framingLines.length * FRAMING_LINE_H : 0) + 14;
 
             // Draw each card without watermark or individual framing
             const cards = achievements.map(ach => drawAchievementCanvas(ach, { noWatermark: true }));
             const cardHeights = cards.map(c => c.height / scale);
             const totalH = FRAMING_H + cardHeights.reduce((a, b) => a + b, 0) + GAP * (cards.length - 1) + WATERMARK_H;
 
-            const canvas = document.createElement('canvas');
             canvas.width = W * scale;
             canvas.height = totalH * scale;
-            const ctx = canvas.getContext('2d');
             ctx.scale(scale, scale);
 
             // Background
@@ -1433,10 +1454,11 @@
 
             // Framing header
             if (framing) {
-                ctx.font = "13px Consolas, Monaco, 'Lucida Console', monospace";
+                ctx.font = FRAMING_FONT;
                 ctx.fillStyle = 'rgba(230,166,116,0.75)';
                 ctx.textAlign = 'center';
-                ctx.fillText(pickFramingLine(framing), W / 2, FRAMING_H - 8);
+                let fy = FRAMING_LINE_H;
+                for (const line of framingLines) { ctx.fillText(line, W / 2, fy); fy += FRAMING_LINE_H; }
                 ctx.textAlign = 'left';
             }
 
@@ -1452,9 +1474,9 @@
 
             // Watermark
             ctx.font = '11px Consolas, Monaco, monospace';
-            ctx.fillStyle = 'rgba(184,158,138,0.45)';
+            ctx.fillStyle = 'rgba(200,172,150,0.6)';
             ctx.textAlign = 'center';
-            ctx.fillText('achievements.carlkibler.com', W / 2, totalH - 6);
+            ctx.fillText('achievements.carlkibler.com', W / 2, totalH - 8);
 
             return canvas;
         }
@@ -1602,11 +1624,12 @@
             const canvas = drawAchievementCanvas(ach, { framing });
             canvas.toBlob(async (blob) => {
                 const file = new File([blob], 'dca-achievement.png', { type: 'image/png' });
-                const shareText = (framing ? framing + '\n' : '') + '— ⚔ achievements.carlkibler.com';
                 try {
                     if (navigator.canShare?.({ files: [file] })) {
-                        await navigator.share({ files: [file], text: shareText, title: 'Dungeon Crawler Achievement' });
+                        // Share image only — title/framing/watermark already rendered into the image.
+                        await navigator.share({ files: [file] });
                     } else {
+                        const shareText = (framing ? framing + '\n' : '') + '— ⚔ achievements.carlkibler.com';
                         await navigator.share({ text: shareText, url: 'https://achievements.carlkibler.com' });
                     }
                 } catch (err) {
@@ -1625,11 +1648,12 @@
                 const canvas = drawSetCanvas(achievements, framing);
                 canvas.toBlob(async (blob) => {
                     const file = new File([blob], 'dca-achievements.png', { type: 'image/png' });
-                    const shareText = (framing ? framing + '\n' : '') + '— ⚔ achievements.carlkibler.com';
                     try {
                         if (navigator.canShare?.({ files: [file] })) {
-                            await navigator.share({ files: [file], text: shareText, title: 'Dungeon Crawler Achievements' });
+                            // Share image only — title/framing/watermark already rendered into the image.
+                            await navigator.share({ files: [file] });
                         } else {
+                            const shareText = (framing ? framing + '\n' : '') + '— ⚔ achievements.carlkibler.com';
                             await navigator.share({ text: shareText, url: 'https://achievements.carlkibler.com' });
                         }
                     } catch (err) {
