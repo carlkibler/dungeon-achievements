@@ -10,7 +10,7 @@ interface Env {
     OPENROUTER_API_KEY?: string;
     OPENROUTER_MODEL?: string;   // default: anthropic/claude-haiku-4.5
     AI?: Ai;                     // Cloudflare Workers AI binding (wrangler.toml: [ai] binding = "AI")
-    CF_AI_MODEL?: string;        // default: @cf/meta/llama-3.1-8b-instruct
+    CF_AI_MODEL?: string;        // default: @cf/meta/llama-3.3-70b-instruct-fp8-fast
     ANALYTICS?: AnalyticsEngineDataset;
 }
 

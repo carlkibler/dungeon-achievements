@@ -4,23 +4,26 @@
   "description": "Dungeon Crawler Carl style achievement generator — Cloudflare Pages + OpenRouter",
   "scripts": {
     "dev": "wrangler pages dev public",
-    "deploy": "CLOUDFLARE_API_TOKEN=$(security find-generic-password -a cloudflare -s dungeon-achievements-pages -w) wrangler pages deploy public",
+    "deploy": "wrangler pages deploy public",
     "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
     "analytics": "node scripts/analytics-report.js",
     "provision-token": "node scripts/provision-token.js",
     "postinstall": "node scripts/check-deps-age.js",
     "check:seo": "node scripts/check-seo.mjs",
-    "check:a11y": "node scripts/check-a11y.mjs"
+    "check:a11y": "node scripts/check-a11y.mjs",
+    "deploy:keychain": "CLOUDFLARE_API_TOKEN=$(security find-generic-password -a cloudflare -s dungeon-achievements-pages -w) wrangler pages deploy public",
+    "serve:node": "tsx server.ts"
   },
   "dependencies": {
-    "openai": "^4.67.0"
+    "openai": "4.104.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260728.1",
     "@types/node": "25.9.1",
     "axe-core": "4.12.1",
     "playwright": "1.62.0",
+    "tsx": "4.23.1",
     "typescript": "5.9.3",
     "vitest": "4.1.10",
     "wrangler": "4.115.0"
@@ -35,5 +38,8 @@
     "rolldown": "1.2.0",
     "tinyexec": "1.2.4",
     "vite": "8.1.5"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }

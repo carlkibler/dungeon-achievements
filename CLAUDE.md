@@ -10,13 +10,15 @@ Serverless web app that generates amusing fake achievements in the style of the 
 
 **Cloudflare Pages + OpenRouter:**
 - **`public/index.html`** — Single-page frontend (vanilla HTML/CSS/JS, no build step)
-- **`functions/generate.ts`** — Cloudflare Pages Function handling POST `/generate`
+- **`src/core.ts`** — all generation logic: prompts, moods, styles, provider fallback, parsing
+- **`functions/generate.ts`** — Cloudflare Pages Function; a thin adapter over `src/core.ts`
+- **`server.ts`** — Node adapter over the same core (API only, see Gotchas)
 - **OpenRouter** — AI provider; model switchable via `OPENROUTER_MODEL` env var (default: `anthropic/claude-haiku-4.5`)
 
 **Key Design Decisions:**
 - No database — achievements stored in browser LocalStorage
 - Vanilla frontend, zero build complexity
-- Prompts inlined in `functions/generate.ts` (CF Workers have no filesystem access)
+- Prompts inlined in `src/core.ts` (CF Workers have no filesystem access)
 - `prompts/` directory kept as source-of-truth reference for prompt editing
 
 **API:**
@@ -31,9 +33,14 @@ Serverless web app that generates amusing fake achievements in the style of the 
 
 ## Gotchas
 
-- **`README.md` is stale** — describes the old AWS Bedrock/Lambda/SAM stack. Trust this file and the code, not the README.
-- **Variety knobs are server-side** — each request rolls a random `mood` (committed for all 3 achievements), a `seedPhrase`, and optionally applies a `recentTitles` Forbidden Words List. See `MOODS`, `SEED_PHRASES`, `buildForbiddenBlock` in `functions/generate.ts`. Response includes `mood` and `moodLabel` strings used by the loading sequence.
-- **Two base prompts exist and diverge.** The runtime prompt is the `BASE_TEMPLATE` const inside `functions/generate.ts`. The files under `prompts/` are not loaded — they're an older reference snapshot. Edit the inlined string.
+- **`README.md` is the public-facing doc and is current** (rewritten 2026-08-12; it no longer describes
+  the old AWS Bedrock/Lambda/SAM stack). It carries the self-hosting guide, so changes to ports,
+  scripts, model defaults, or the style-pill markup have to land there too.
+- **`server.ts` is not feature-equivalent to the Pages Function.** It serves `POST /generate` only —
+  no static files, no Workers AI fallback, and no `degraded` flag in its response. Don't reach for it
+  as a local stand-in for the real site; `make dev` runs the actual Workers runtime.
+- **Variety knobs are server-side** — each request rolls a random `mood` (committed for all 3 achievements), a `seedPhrase`, and optionally applies a `recentTitles` Forbidden Words List. See `MOODS`, `SEED_PHRASES`, `buildForbiddenBlock` in `src/core.ts`. Response includes `mood` and `moodLabel` strings used by the loading sequence.
+- **Two base prompts exist and diverge.** The runtime prompt is the `BASE_TEMPLATE` const inside `src/core.ts`. The files under `prompts/` are not loaded — they're an older reference snapshot. Edit the inlined string.
 - **Backend never returns 5xx for AI/parsing failures.** It returns 200 with `FALLBACK_ACHIEVEMENTS`. The only real error responses are `400` (missing/empty or over-long `activity`). Because a broken site still returns 200 with plausible JSON, **uptime checks cannot detect an outage here** — check the `degraded` flag instead. This exact blind spot hid a full outage from 2026-05-28 to 2026-08-12.
 - **Provider chain is OpenRouter → Workers AI → canned.** `runWithFallback` in `src/core.ts` (unit-tested) tries each in order; `degraded` is true if the first choice failed. Workers AI needs no key — it uses the `[ai]` binding in `wrangler.toml`.
 - **Model slugs rot, and both providers have bitten us.** OpenRouter retired `anthropic/claude-3-5-haiku`; Workers AI renamed `@cf/meta/llama-3.1-8b-instruct` to `-fp8`. When output goes generic, re-check the slug against `https://openrouter.ai/api/v1/models` or `GET /accounts/{id}/ai/models/search`.
@@ -58,10 +65,13 @@ newest match is always too fresh. Before this was pinned, a plain `npm install` 
 ## Commands
 
 ```bash
-make dev        # local dev server (reads .dev.vars)
+make dev        # local dev server on :8788 (reads .dev.vars)
 make deploy     # deploy to Cloudflare Pages
 make secret     # set OPENROUTER_API_KEY in CF
 make typecheck  # TypeScript type checking
+make seo        # metadata, DCC keywords, FAQ/JSON-LD sync, og.png, robots, sitemap
+make a11y       # axe + keyboard/focus + reflow (needs `make dev` running)
+npm test        # vitest — provider fallback chain and parsing
 ```
 
 ## Project Structure
@@ -78,10 +88,22 @@ public/
     ├── cormorant-garamond-latin-400-normal.woff2
     ├── cormorant-garamond-latin-400-italic.woff2  # Achievement titles
     └── cormorant-garamond-latin-600-normal.woff2
+src/
+├── core.ts             # All generation logic — the file you usually want
+└── core.test.ts        # Unit tests for the fallback chain and parsing
 functions/
-└── generate.ts         # CF Pages Function — calls OpenRouter API
+└── generate.ts         # CF Pages Function — thin adapter over src/core.ts
+server.ts               # Node adapter (API only — no static files, no degraded flag)
+scripts/
+├── check-seo.mjs       # Guards metadata + FAQ/JSON-LD sync (no deps)
+├── check-a11y.mjs      # axe + keyboard/focus + reflow (needs playwright)
+├── check-deps-age.js   # 14-day supply-chain cooldown, runs on postinstall
+├── analytics-report.js # CLI analytics dashboard
+└── provision-token.js  # Creates a scoped CF token for analytics
+corpus/                 # Source-linked DCC achievements used to tune the prompt
 prompts/                # Reference snapshots only — NOT loaded at runtime. Editing has no effect.
 docs/                   # Brainstorm notes and design decisions
+.github/workflows/      # canary.yml watches the `degraded` flag daily; deploy.yml
 wrangler.toml           # Cloudflare Pages config
 .dev.vars               # Local secrets (gitignored)
 .dev.vars.example       # Template for .dev.vars
@@ -120,7 +142,7 @@ Playwright browser binary once: `npx playwright install chromium`.
 
 ## Adding New Features
 
-**New style:** Both sides must agree. Add a key to the `STYLES` object in `functions/generate.ts` AND a matching pill button (with `data-style="<key>"`) in `public/index.html`. The reference file in `prompts/styles/` is optional and not loaded at runtime.
+**New style:** Both sides must agree. Add a key to the `STYLES` object in `src/core.ts` AND a matching pill button in `public/index.html` — which must carry `role="radio" aria-checked="false" tabindex="-1"` and an `aria-hidden` emoji span, or it breaks the radiogroup (`make a11y` catches this). The reference file in `prompts/styles/` is optional and not loaded at runtime.
 
 **Switch AI model:** Change `OPENROUTER_MODEL` secret in Cloudflare dashboard, or locally in `.dev.vars`. Browse models at https://openrouter.ai/models.
 

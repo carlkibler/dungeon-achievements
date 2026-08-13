@@ -19,8 +19,10 @@ a11y:
 dev:
 	npx wrangler pages dev public
 
+# Uses the project deploy token from the macOS Keychain when it's there, and falls
+# back to whatever wrangler already has (`wrangler login`, or CLOUDFLARE_API_TOKEN).
 deploy:
-	CLOUDFLARE_API_TOKEN=$(shell security find-generic-password -a cloudflare -s dungeon-achievements-pages -w) npx wrangler pages deploy public
+	CLOUDFLARE_API_TOKEN=$(shell security find-generic-password -a cloudflare -s dungeon-achievements-pages -w 2>/dev/null) npx wrangler pages deploy public
 
 secret:
 	npx wrangler pages secret put OPENROUTER_API_KEY
