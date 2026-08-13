@@ -1,0 +1,53 @@
+name: Canary
+
+# Why this exists: /generate returns HTTP 200 with canned achievements when the AI
+# provider fails, so uptime checks and Cloudflare notifications cannot see an outage.
+# Only the `degraded` field can. A retired model slug hid a full outage for ~11 weeks
+# before this check existed.
+
+on:
+  schedule:
+    - cron: '17 13 * * *'   # daily, 13:17 UTC
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe /generate and inspect the degraded flag
+        run: |
+          set -uo pipefail
+          body=$(mktemp)
+          code=$(curl -sS -m 90 -o "$body" -w '%{http_code}' \
+            -X POST https://achievements.carlkibler.com/generate \
+            -H 'Content-Type: application/json' \
+            -d '{"activity":"daily canary check"}') || {
+              echo "::error::request to /generate failed outright"; exit 1; }
+
+          echo "HTTP $code"
+          head -c 600 "$body"; echo
+
+          if [ "$code" != "200" ]; then
+            echo "::error::/generate returned HTTP $code"
+            exit 1
+          fi
+
+          degraded=$(jq -r 'if has("degraded") then .degraded else "missing" end' "$body")
+          count=$(jq -r '.achievements | length' "$body")
+
+          if [ "$degraded" = "missing" ]; then
+            echo "::error::response has no degraded field — deployed build is older than the fallback change"
+            exit 1
+          fi
+
+          if [ "$degraded" != "false" ]; then
+            echo "::error::DA is DEGRADED — the primary AI provider is failing and visitors are getting fallback output. Check the model slug against https://openrouter.ai/api/v1/models"
+            exit 1
+          fi
+
+          if [ "$count" != "3" ]; then
+            echo "::error::expected 3 achievements, got $count"
+            exit 1
+          fi
+
+          echo "healthy: primary provider served 3 achievements"
