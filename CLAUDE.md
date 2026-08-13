@@ -40,6 +40,21 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - **Workers AI returns two response shapes.** Classic models give `{ response }`; OpenAI-compatible ones (`gpt-oss`, reasoning models) give `{ choices[0].message.content }`, and reasoning models can return `content: null`. `callWorkersAI` reads both and throws on empty. The account is on the **Workers Free plan** — premium models like `@cf/zai-org/glm-5.2` return an availability error.
 - **`public/html2canvas.min.js` is unused.** Image export uses a custom `drawAchievementCanvas()` (Canvas API) — html2canvas was left behind from an earlier approach.
 
+## Dependencies
+
+**Every version in `package.json` is pinned exactly, and that is load-bearing.** `scripts/check-deps-age.js`
+runs on `postinstall` and refuses any package published less than 14 days ago. A caret range is in
+permanent conflict with that rule: npm re-resolves to the newest match on every install, and the
+newest match is always too fresh. Before this was pinned, a plain `npm install` failed on 20 packages.
+
+- `overrides` in `package.json` holds transitive deps (vite, rolldown, postcss, nanoid, …) at the
+  newest release that clears the cooldown. They are not arbitrary — each was too fresh at pin time.
+- To upgrade anything, find the newest version at least 14 days old and set it exactly. `npm view
+  <pkg> time --json` gives publish dates.
+- `wrangler` and `@cloudflare/workers-types` must move together — wrangler declares the matching
+  types package as a peer dependency, and mismatched majors fail `npm install` outright.
+- `package-lock.json` is gitignored, so `npm ci` is not available here; `npm install` is the entry point.
+
 ## Commands
 
 ```bash
@@ -54,6 +69,9 @@ make typecheck  # TypeScript type checking
 ```
 public/
 ├── index.html          # Frontend with embedded CSS/JS
+├── robots.txt          # Allows all; points at sitemap
+├── sitemap.xml         # Single URL — bump <lastmod> on meaningful content changes
+├── og.png              # 1200x630 social card (regenerate: see SEO note below)
 └── fonts/              # Self-hosted woff2 (no CDN). Add <link rel=preload> + @font-face for any new file.
     ├── PressStart2P-Regular.woff2    # Page title (pixel)
     ├── outfit-variable.woff2         # Body / UI
@@ -70,6 +88,30 @@ wrangler.toml           # Cloudflare Pages config
 Makefile                # Dev shortcuts
 ```
 
+**Type scale:** every `font-size` in the stylesheet is in `rem`, so `html { font-size }` (currently
+`118.75%` = 19px) is the single dial for the whole page. Scale the page there, not by editing
+individual rules. The canvas export sizes are px in JS and deliberately do *not* follow it.
+
+## Accessibility
+
+`make a11y` (needs `make dev` running) runs axe-core, keyboard/focus behaviour, and a reflow sweep
+from 1600px to 320px. Run it after any change to markup, focus handling, or layout. It needs the
+Playwright browser binary once: `npx playwright install chromium`.
+
+- **`#srStatus` is the only thing that talks.** The loading panel is `aria-hidden` on purpose — its
+  verdict line swaps every 3.5s and would interrupt a screen reader on a loop. Announce through
+  `announce()` instead, and strip emoji from anything announced (`plainTitle()`).
+- **Focus moves to `#achievementsHeading` when results land.** Without it a keyboard user is stranded
+  on the Generate button with no idea the page changed. Don't replace this with scrolling alone.
+- **Action buttons need unique `aria-label`s** — "Copy" appears a dozen times per page, so the label
+  must name its achievement. `cardActions()` builds them; the a11y check fails on duplicates.
+- **The style picker is an ARIA radiogroup** with roving tabindex (one Tab stop, arrow keys move).
+  Adding a style means adding a `role="radio"` pill with `aria-checked` and `tabindex="-1"`.
+- **Never use `transition: all` on an interactive control** — it animates `outline-color`, so the
+  focus ring fades in over 200ms instead of appearing. Name the properties.
+- **Reflow is the zoom test.** Browser zoom shrinks the CSS viewport: 1280px at 400% zoom is a 320px
+  layout. `white-space: nowrap` on a button is the usual thing that breaks it.
+
 **Visual design — Crawler Codex palette** (CSS vars in `index.html`):
 - `--c-bg #0b0906` warm dark base, `--c-accent #9c6644` iron-rust, `--c-accent-soft #c4845a` phosphor-amber (AI voice), `--c-amber #e6a674` warm highlight.
 - Achievement title: Cormorant Garamond italic + amber CRT glow text-shadow.
@@ -83,6 +125,27 @@ Makefile                # Dev shortcuts
 **Switch AI model:** Change `OPENROUTER_MODEL` secret in Cloudflare dashboard, or locally in `.dev.vars`. Browse models at https://openrouter.ai/models.
 
 **Custom domain:** Add via Cloudflare Pages dashboard → Custom domains.
+
+## SEO
+
+The site's whole discovery hook is "Dungeon Crawler Carl" / "DCC" — those strings must stay in
+crawlable text, not just in the prompts. They currently live in: `<title>`, meta description, OG +
+Twitter tags, JSON-LD (`WebApplication` + `FAQPage`), the `.tagline` under the `<h1>`, and the
+`<footer class="site-footer">` about + FAQ copy.
+
+**`make seo` (or `npm run check:seo`) enforces all of this** — run it after touching `index.html`'s
+head or footer. It fails on missing meta tags, a missing "Dungeon Crawler Carl"/"DCC" in visible copy,
+unparseable JSON-LD, an FAQ answer that isn't on the page, a wrong-sized `og.png`, or a broken
+robots/sitemap.
+
+- **The visible FAQ and the `FAQPage` JSON-LD must stay in sync.** Google drops structured data whose
+  answers don't appear on the page — silently. `make seo` compares them sentence by sentence, which is
+  why the JSON-LD answers are verbatim copies of the footer text rather than paraphrases.
+- **The fan-project disclaimer is load-bearing** — it names Matt Dinniman as rights holder and is the
+  honest answer to "is this official?", which is also a real search query. Don't quietly drop it.
+- **Regenerate `og.png`** from a 1200x630 HTML card via
+  `chrome-shot --size 1200x630 -o public/og.png file:///path/to/card.html`. Social scrapers cache it
+  hard — changing the image usually needs a cache-busting filename, not just a redeploy.
 
 ## Local Development
 

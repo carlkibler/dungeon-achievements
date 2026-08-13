@@ -9,17 +9,31 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
     "analytics": "node scripts/analytics-report.js",
     "provision-token": "node scripts/provision-token.js",
-    "postinstall": "node scripts/check-deps-age.js"
+    "postinstall": "node scripts/check-deps-age.js",
+    "check:seo": "node scripts/check-seo.mjs",
+    "check:a11y": "node scripts/check-a11y.mjs"
   },
   "dependencies": {
     "openai": "^4.67.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240924.0",
-    "@types/node": "^25.9.1",
-    "typescript": "^5.1.6",
-    "vitest": "^4.1.10",
-    "wrangler": "^4.80.0"
+    "@cloudflare/workers-types": "5.20260728.1",
+    "@types/node": "25.9.1",
+    "axe-core": "4.12.1",
+    "playwright": "1.62.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10",
+    "wrangler": "4.115.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "overrides": {
+    "@napi-rs/wasm-runtime": "1.2.0",
+    "@oxc-project/types": "0.142.0",
+    "@speed-highlight/core": "1.2.17",
+    "nanoid": "3.3.16",
+    "postcss": "8.5.24",
+    "rolldown": "1.2.0",
+    "tinyexec": "1.2.4",
+    "vite": "8.1.5"
+  }
 }

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# The generator endpoint is POST-only and has nothing to index.
+Disallow: /generate
+
+Sitemap: https://achievements.carlkibler.com/sitemap.xml

@@ -51,3 +51,4 @@ temp/
 .claude/settings.*.bak
 /*.png
 .claude/.cozempic-init.lock
+.worktrees

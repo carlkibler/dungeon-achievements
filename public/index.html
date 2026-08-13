@@ -3,7 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Achievements Generator</title>
+    <title>Dungeon Crawler Carl Achievement Generator (DCC) — Dungeon Achievements</title>
+    <meta name="description" content="Type what you did and the System hands back three achievements in the voice of the trolling AI from Dungeon Crawler Carl (DCC). Free, instant, no signup.">
+    <link rel="canonical" href="https://achievements.carlkibler.com/">
+    <meta name="theme-color" content="#0b0906">
+    <meta name="author" content="Carl Kibler">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Dungeon Achievements">
+    <meta property="og:url" content="https://achievements.carlkibler.com/">
+    <meta property="og:title" content="Dungeon Crawler Carl Achievement Generator (DCC)">
+    <meta property="og:description" content="Describe what you did. The System logs it and issues three achievements in the voice of the trolling AI from Dungeon Crawler Carl.">
+    <meta property="og:image" content="https://achievements.carlkibler.com/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Dungeon Achievements — a DCC-style achievement card reading Achievement Unlocked.">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Dungeon Crawler Carl Achievement Generator (DCC)">
+    <meta name="twitter:description" content="Describe what you did. The System logs it and issues three achievements in the voice of the trolling AI from Dungeon Crawler Carl.">
+    <meta name="twitter:image" content="https://achievements.carlkibler.com/og.png">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://achievements.carlkibler.com/#app",
+          "name": "Dungeon Achievements",
+          "alternateName": ["DCC Achievement Generator", "Dungeon Crawler Carl Achievement Generator"],
+          "url": "https://achievements.carlkibler.com/",
+          "description": "A free generator that writes fake RPG achievements in the sarcastic voice of the all-seeing AI from the Dungeon Crawler Carl (DCC) book series by Matt Dinniman.",
+          "applicationCategory": "EntertainmentApplication",
+          "operatingSystem": "Any (web browser)",
+          "browserRequirements": "Requires JavaScript.",
+          "inLanguage": "en",
+          "isAccessibleForFree": true,
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "author": { "@type": "Person", "name": "Carl Kibler" },
+          "keywords": "Dungeon Crawler Carl, DCC, achievement generator, LitRPG, Matt Dinniman, fake achievements, System AI",
+          "about": { "@id": "https://achievements.carlkibler.com/#dcc" }
+        },
+        {
+          "@type": "Person",
+          "@id": "https://achievements.carlkibler.com/#dinniman",
+          "name": "Matt Dinniman",
+          "url": "https://mattdinniman.com/",
+          "sameAs": ["https://en.wikipedia.org/wiki/Matt_Dinniman"]
+        },
+        {
+          "@type": "Person",
+          "@id": "https://achievements.carlkibler.com/#hays",
+          "name": "Jeff Hays",
+          "url": "https://soundbooththeater.com/team/jeff-hays/"
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://achievements.carlkibler.com/#soundbooth",
+          "name": "Soundbooth Theater",
+          "url": "https://soundbooththeater.com/",
+          "founder": { "@id": "https://achievements.carlkibler.com/#hays" }
+        },
+        {
+          "@type": "BookSeries",
+          "@id": "https://achievements.carlkibler.com/#dcc",
+          "name": "Dungeon Crawler Carl",
+          "alternateName": "DCC",
+          "author": { "@id": "https://achievements.carlkibler.com/#dinniman" },
+          "sameAs": [
+            "https://en.wikipedia.org/wiki/Dungeon_Crawler_Carl",
+            "https://soundbooththeater.com/series/dungeon-crawler-carl/"
+          ]
+        },
+        {
+          "@type": "Audiobook",
+          "@id": "https://achievements.carlkibler.com/#dcc-audio",
+          "name": "Dungeon Crawler Carl (audiobook series)",
+          "url": "https://www.audible.com/series/Dungeon-Crawler-Carl-Audiobooks/B0937JMKYV",
+          "author": { "@id": "https://achievements.carlkibler.com/#dinniman" },
+          "readBy": { "@id": "https://achievements.carlkibler.com/#hays" },
+          "publisher": { "@id": "https://achievements.carlkibler.com/#soundbooth" },
+          "sameAs": [
+            "https://soundbooththeater.com/series/dungeon-crawler-carl/",
+            "https://soundbooth.app/dungeon-crawler-carl"
+          ],
+          "partOfSeries": { "@id": "https://achievements.carlkibler.com/#dcc" },
+          "inLanguage": "en"
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://achievements.carlkibler.com/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is Dungeon Achievements?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Dungeon Achievements turns anything you did — slaying a deadline, eating cereal for dinner, surviving a meeting — into three fake RPG achievements, each with a title, a description, and a reward. They are written in the sarcastic, all-seeing voice of the System AI from Dungeon Crawler Carl, the LitRPG series by Matt Dinniman that fans abbreviate as DCC. Pick a tone — default DCC snark, corporate, absurd, wholesome, brutal, pirate, or Shakespearean bard — and the System obliges. It is free, needs no account, and keeps your recent achievements only in your own browser."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What does DCC stand for?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "DCC is fan shorthand for Dungeon Crawler Carl, Matt Dinniman's LitRPG series in which a snarky AI narrates a deadly dungeon and hands out absurd achievements to the crawlers inside it. That AI's voice is the one this generator imitates."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Who narrates the Dungeon Crawler Carl audiobooks?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Jeff Hays narrates every book in the series, voicing Carl, Donut, and the System AI. He is also the founder of Soundbooth Theater, the studio that publishes the audiobooks and produces the full-cast Audio Immersion Tunnel adaptation."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is this official or affiliated with Matt Dinniman?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. This is an unofficial fan project, not affiliated with, endorsed by, or licensed from Matt Dinniman or the publishers of Dungeon Crawler Carl. If you found this before you found the books, fix that: start with book one."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is it free?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. No signup, no account, no payment. Close the tab and the System forgets you, which is more than it does in the books."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
     <!-- Fonts: self-hosted — no external CDN requests -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/PressStart2P-Regular.woff2" crossorigin>
     <link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-variable.woff2" crossorigin>
@@ -67,6 +204,69 @@
             box-sizing: border-box;
         }
 
+        /* Every size below is in rem, so this is the one dial for the whole page's type scale. */
+        html {
+            font-size: 118.75%;   /* 19px base */
+        }
+
+        /* ── Accessibility primitives ────────────────────────────── */
+
+        /* Visible only to screen readers. Used for status announcements and
+           for the context that sighted users get from proximity alone. */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translate(-50%, -120%);
+            z-index: 100;
+            padding: 12px 20px;
+            background: var(--c-amber);
+            color: #160f08;
+            font-weight: 600;
+            border-radius: 0 0 8px 8px;
+            text-decoration: none;
+        }
+
+        .skip-link:focus {
+            transform: translate(-50%, 0);
+        }
+
+        /* One focus ring for every interactive element, amber so it clears 9.5:1 on the
+           page and 3:1 against every button fill it sits beside. */
+        :where(a, button, textarea, [tabindex]):focus-visible {
+            outline: 3px solid var(--c-amber);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+
+        /* Headings that receive focus programmatically shouldn't show a ring
+           when clicked, only the outline above when focus is moved to them. */
+        [tabindex="-1"]:focus {
+            outline: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
         body {
             font-family: 'Outfit Variable', 'Avenir Next', 'Segoe UI', sans-serif;
             background: var(--c-bg);
@@ -76,7 +276,7 @@
         }
 
         .container {
-            max-width: 880px;
+            max-width: 940px;
             margin: 0 auto;
         }
 
@@ -93,6 +293,20 @@
             margin-bottom: 16px;
             line-height: 1.6;
             letter-spacing: 1px;
+        }
+
+        .tagline {
+            font-size: 0.78rem;
+            color: var(--c-accent-soft);
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            margin-bottom: 14px;
+            text-wrap: balance;
+        }
+
+        .tagline strong {
+            color: var(--c-amber);
+            font-weight: 600;
         }
 
         .subtitle {
@@ -146,10 +360,15 @@
             opacity: 1;
         }
 
+        /* Keyboard focus gets the standard amber ring like every other control.
+           Mouse/programmatic focus keeps the subtler original treatment. */
         .input-field:focus {
-            outline: none;
             border-color: var(--c-accent);
             box-shadow: 0 0 0 3px rgba(174, 114, 76, 0.25);
+        }
+
+        .input-field:focus:not(:focus-visible) {
+            outline: none;
         }
 
         .style-selector {
@@ -182,7 +401,7 @@
             font-size: 0.875rem;
             word-spacing: 0.2em;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
             white-space: nowrap;
         }
 
@@ -230,7 +449,7 @@
             font-family: 'Outfit Variable', sans-serif;
             font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
             text-align: left;
         }
 
@@ -243,16 +462,17 @@
         .generate-btn {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #ae724c 0%, #c07e54 100%);
+            /* Lightened so dark ink clears AAA — cream-on-rust was 2.5:1, a hard fail. */
+            background: linear-gradient(135deg, #c4845a 0%, #e0a273 100%);
             border: none;
             border-radius: 7px;
-            color: #f0e8dc;
+            color: #160f08;
             font-size: 1rem;
             font-weight: 600;
             font-family: 'Outfit Variable', sans-serif;
             letter-spacing: 0.5px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: box-shadow 0.2s ease, transform 0.2s ease, filter 0.2s ease;
             margin-top: 20px;
         }
 
@@ -282,6 +502,48 @@
         @keyframes achievementReveal {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        .achievement-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        /* Achievement card internals. These were inline styles; they moved here so the
+           title could become a real <h3> that screen readers can jump between. */
+        .achievement-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-style: italic;
+            font-weight: 400;
+            font-size: 1.2em;
+            line-height: 1.3;
+            color: var(--c-amber);
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(230, 166, 116, 0.35);
+            word-spacing: 0.2em;
+        }
+
+        .achievement-desc {
+            margin-bottom: 10px;
+            line-height: 1.65;
+            color: var(--c-ink);
+        }
+
+        .achievement-reward {
+            color: var(--c-muted);
+            font-style: italic;
+            padding-top: 8px;
+            border-top: 1px solid var(--c-line-strong);
+            font-size: 0.88em;
         }
 
         .achievement {
@@ -485,12 +747,188 @@
             padding-top: 28px;
         }
 
+        /* Deliberately far below the app. The About/FAQ copy is for search engines
+           and first-time readers — it must never look like part of the generator. */
+        .site-footer {
+            margin-top: clamp(96px, 16vh, 168px);
+            border-top: 1px solid var(--c-line);
+            padding-top: 40px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--c-muted);
+        }
+
+        /* A quiet dividing mark so the gap reads as intentional, not as a broken layout. */
+        .site-footer::before {
+            content: '';
+            display: block;
+            width: 42px;
+            height: 1px;
+            margin: -60px auto 60px;
+            background: var(--c-accent);
+            opacity: 0.5;
+        }
+
+        .site-footer h2 {
+            color: var(--c-accent-soft);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+
+        .site-footer h3 {
+            color: var(--c-ink);
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .site-footer p {
+            margin-bottom: 18px;
+            max-width: 68ch;
+        }
+
+        .site-footer a {
+            color: var(--c-amber);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .site-footer a:hover {
+            color: var(--c-ink);
+        }
+
+        /* Two direct doors to the real thing, placed above the prose that explains them. */
+        .footer-links {
+            list-style: none;
+            max-width: 68ch;
+            margin: 0 0 22px;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .footer-links li {
+            position: relative;
+            padding-left: 18px;
+        }
+
+        .footer-links li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--c-accent);
+        }
+
+        .footer-links a {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .footer-links span {
+            display: block;
+            color: var(--c-muted-soft);
+        }
+
+        .footer-faq {
+            margin-top: 32px;
+        }
+
+        .footer-legal {
+            max-width: none;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid var(--c-line);
+            font-size: 0.85rem;
+            color: var(--c-muted-soft);
+        }
+
         .recent-title {
             color: var(--c-muted);
             font-size: 0.78rem;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             margin-bottom: 15px;
+        }
+
+        /* Recent entries. Previously inline styles carrying a stray slate-blue border
+           (#4a5568) from an older palette — now on the Crawler Codex tokens. */
+        .recent-entry {
+            margin-bottom: 20px;
+            padding: 14px;
+            border: 1px solid var(--c-line-strong);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .recent-entry-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .recent-entry-title {
+            color: var(--c-muted);
+            font-size: 0.85rem;
+            font-weight: 400;
+        }
+
+        .recent-entry-style {
+            margin-left: 6px;
+            color: var(--c-amber);
+        }
+
+        .recent-entry-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .achievement.is-recent {
+            margin-bottom: 8px;
+            animation: none;
+            opacity: 1;
+        }
+
+        .achievement-text.is-recent {
+            font-size: 0.88rem;
+        }
+
+        /* ── Responsive ──────────────────────────────────────────────
+           These breakpoints are also the zoom story: browser zoom shrinks the CSS
+           viewport, so a 1280px window at 400% zoom is a 320px layout. WCAG 1.4.10
+           requires the page to reflow there with no horizontal scrolling. */
+
+        /* Action rows: let buttons wrap and shrink instead of forcing the page wider. */
+        .bulk-actions .copy-btn,
+        .recent-entry-actions .copy-btn {
+            min-width: 0;
+            flex: 0 1 auto;
+        }
+
+        @media (max-width: 700px) {
+            /* The nowrap labels are what push past the right edge first. */
+            .bulk-actions .copy-btn,
+            .recent-entry-actions .copy-btn {
+                white-space: normal;
+            }
+
+            .recent-entry-head {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bulk-actions,
+            .recent-entry-actions {
+                justify-content: flex-start;
+            }
         }
 
         @media (max-width: 600px) {
@@ -503,54 +941,198 @@
             .examples-grid {
                 grid-template-columns: 1fr;
             }
+
+            /* A 96px button column beside the text leaves too little room for either.
+               Stack them: actions become a full-width wrapping row above the card text. */
+            .achievement {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .achievement-actions {
+                flex-direction: row;
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            .achievement-actions .copy-btn {
+                width: auto;
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+        }
+
+        @media (max-width: 380px) {
+            body {
+                padding: 12px;
+            }
+            .achievement {
+                padding: 14px 12px;
+            }
         }
     </style>
 </head>
 <body>
+    <a class="skip-link" href="#activityInput">Skip to the achievement generator</a>
+
+    <!-- Every status change in this app is announced here. Politeness keeps it from
+         interrupting whatever the user is reading; it never steals focus. -->
+    <div id="srStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
     <div class="container">
         <header class="header">
-            <h1 class="title">🏆 Dungeon Achievements 🏆</h1>
+            <h1 class="title">
+                <span aria-hidden="true">🏆</span>
+                Dungeon Achievements
+                <span aria-hidden="true">🏆</span>
+            </h1>
+            <p class="tagline">An achievement generator in the voice of the <strong>Dungeon Crawler Carl</strong> (DCC) System AI</p>
             <p class="subtitle">
                 The System is watching. Your deeds — heroic, mundane, or deeply questionable — are being logged. Describe what you did. Receive the achievements you deserve.
             </p>
         </header>
 
-        <div class="input-section">
-            <label class="input-label" for="activityInput">What did you do?</label>
-            <textarea
-                id="activityInput"
-                class="input-field"
-                placeholder="e.g., Made coffee this morning, Survived a Zoom meeting, Finished a project..."
-                maxlength="500"
-            ></textarea>
+        <main id="main">
+            <h2 class="sr-only">Generate achievements</h2>
 
-            <div class="style-selector">
-                <span class="style-label">Style:</span>
-                <div class="style-pills">
-                    <button class="style-pill active" data-style="default">🏰 Default</button>
-                    <button class="style-pill" data-style="corporate">💼 Corporate</button>
-                    <button class="style-pill" data-style="funny">🤪 Absurd</button>
-                    <button class="style-pill" data-style="nice">💖 Wholesome</button>
-                    <button class="style-pill" data-style="mean">🔥 Brutal</button>
-                    <button class="style-pill" data-style="pirate">🏴‍☠️ Pirate</button>
-                    <button class="style-pill" data-style="shakespeare">📜 Bard</button>
+            <div class="input-section">
+                <label class="input-label" for="activityInput">What did you do?</label>
+                <textarea
+                    id="activityInput"
+                    class="input-field"
+                    placeholder="e.g., Made coffee this morning, Survived a Zoom meeting, Finished a project..."
+                    maxlength="500"
+                    aria-describedby="activityHint"
+                ></textarea>
+                <p id="activityHint" class="sr-only">
+                    Up to 500 characters. Press Enter to generate, or Shift plus Enter for a new line.
+                </p>
+
+                <div class="style-selector">
+                    <span class="style-label" id="styleLabel">Style:</span>
+                    <div class="style-pills" role="radiogroup" aria-labelledby="styleLabel">
+                        <button type="button" class="style-pill active" role="radio" aria-checked="true"  tabindex="0"  data-style="default"><span aria-hidden="true">🏰</span> Default</button>
+                        <button type="button" class="style-pill"        role="radio" aria-checked="false" tabindex="-1" data-style="corporate"><span aria-hidden="true">💼</span> Corporate</button>
+                        <button type="button" class="style-pill"        role="radio" aria-checked="false" tabindex="-1" data-style="funny"><span aria-hidden="true">🤪</span> Absurd</button>
+                        <button type="button" class="style-pill"        role="radio" aria-checked="false" tabindex="-1" data-style="nice"><span aria-hidden="true">💖</span> Wholesome</button>
+                        <button type="button" class="style-pill"        role="radio" aria-checked="false" tabindex="-1" data-style="mean"><span aria-hidden="true">🔥</span> Brutal</button>
+                        <button type="button" class="style-pill"        role="radio" aria-checked="false" tabindex="-1" data-style="pirate"><span aria-hidden="true">🏴‍☠️</span> Pirate</button>
+                        <button type="button" class="style-pill"        role="radio" aria-checked="false" tabindex="-1" data-style="shakespeare"><span aria-hidden="true">📜</span> Bard</button>
+                    </div>
                 </div>
+
+                <p id="inputError" class="error" role="alert" hidden></p>
+
+                <button type="button" id="generateBtn" class="generate-btn" onclick="generateAchievements()">
+                    <span aria-hidden="true">⚔️</span> <span id="generateBtnLabel">Generate Achievements</span>
+                </button>
             </div>
 
-            <button id="generateBtn" class="generate-btn" onclick="generateAchievements()">
-                ⚔️ Generate Achievements
-            </button>
-        </div>
+            <section id="achievementsSection" class="achievements-section" style="display: none;" aria-labelledby="achievementsHeading">
+                <h2 class="achievements-title" id="achievementsHeading" tabindex="-1">Your Achievements:</h2>
+                <div id="achievementsList"></div>
+            </section>
 
-        <div id="achievementsSection" class="achievements-section" style="display: none;">
-            <h2 class="achievements-title">Your Achievements:</h2>
-            <div id="achievementsList"></div>
-        </div>
+            <section id="recentSection" class="recent-section" style="display: none;" aria-labelledby="recentHeading">
+                <h2 class="recent-title" id="recentHeading">Recent Achievements:</h2>
+                <div id="recentList"></div>
+            </section>
+        </main>
 
-        <div id="recentSection" class="recent-section" style="display: none;">
-            <h3 class="recent-title">Recent Achievements:</h3>
-            <div id="recentList"></div>
-        </div>
+        <footer class="site-footer">
+            <h2>About this generator</h2>
+            <p>
+                <strong>Dungeon Achievements</strong> turns anything you did — slaying a deadline, eating cereal for
+                dinner, surviving a meeting — into three fake RPG achievements, each with a title, a description, and a
+                reward. They are written in the sarcastic, all-seeing voice of the System AI from
+                <strong>Dungeon Crawler Carl</strong>, the LitRPG series by
+                <a href="https://mattdinniman.com/" rel="noopener">Matt Dinniman</a> that fans abbreviate as
+                <strong>DCC</strong>. Pick a tone — default DCC snark, corporate, absurd, wholesome, brutal, pirate, or
+                Shakespearean bard — and the System obliges. It is free, needs no account, and keeps your recent
+                achievements only in your own browser.
+            </p>
+
+            <h2>Go listen to the real thing</h2>
+            <ul class="footer-links">
+                <li>
+                    <a href="https://www.audible.com/series/Dungeon-Crawler-Carl-Audiobooks/B0937JMKYV" rel="noopener">The
+                    Dungeon Crawler Carl audiobooks</a>
+                    <span>on Audible — Jeff Hays, solo, every book in the series.</span>
+                </li>
+                <li>
+                    <a href="https://soundbooth.app/dungeon-crawler-carl" rel="noopener">Full cinematic versions</a>
+                    <span>on Soundbooth — full cast, original score, sound design.</span>
+                </li>
+            </ul>
+            <p>
+                The audiobooks are narrated by
+                <a href="https://soundbooththeater.com/team/jeff-hays/" rel="noopener">Jeff Hays</a>, and "narrated"
+                undersells it by a wide margin. He performs Carl, Donut, and the System AI — the voice this whole toy is
+                imitating — as fully separate, fully inhabited characters, somewhere north of two hundred of them. He is
+                the reason so many of us <em>hear</em> the AI instead of reading it. The man is incredible. Start with
+                book one and lose a weekend.
+            </p>
+            <p>
+                The cinematic version is the <strong>Audio Immersion Tunnel</strong> — the same story with a full cast,
+                sound design, an original score, guest performances from
+                <a href="https://www.andreaparsneau.com/" rel="noopener">Andrea Parsneau</a>,
+                <a href="https://www.travisbaldree.com/" rel="noopener">Travis Baldree</a>,
+                <a href="https://www.heathmiller.net/" rel="noopener">Heath Miller</a>, and
+                <a href="https://www.johnathanmcclain.com/" rel="noopener">Johnathan McClain</a>, plus bonus material
+                that isn't in the books — released episodically, one season per book. It lives on
+                <a href="https://soundbooth.app/dungeon-crawler-carl" rel="noopener">Soundbooth</a>, in the browser or
+                the app. Hays' studio, <a href="https://soundbooththeater.com/" rel="noopener">Soundbooth Theater</a>,
+                also put out a vinyl soundtrack and a USB-cassette edition if you want to go all the way down.
+            </p>
+
+            <div class="footer-faq">
+                <h2>Questions the System has anticipated</h2>
+
+                <h3>What does DCC stand for?</h3>
+                <p>
+                    DCC is fan shorthand for <em>Dungeon Crawler Carl</em>,
+                    <a href="https://mattdinniman.com/" rel="noopener">Matt Dinniman's</a> LitRPG series in which a
+                    snarky AI narrates a deadly dungeon and hands out absurd achievements to the crawlers inside it.
+                    That AI's voice is the one this generator imitates.
+                </p>
+
+                <h3>Who narrates the Dungeon Crawler Carl audiobooks?</h3>
+                <p>
+                    <a href="https://soundbooththeater.com/team/jeff-hays/" rel="noopener">Jeff Hays</a> narrates every
+                    book in the series, voicing Carl, Donut, and the System AI. He is also the founder of
+                    <a href="https://soundbooththeater.com/" rel="noopener">Soundbooth Theater</a>, the studio that
+                    publishes the audiobooks and produces the full-cast Audio Immersion Tunnel adaptation.
+                </p>
+
+                <h3>Are these real Dungeon Crawler Carl achievements?</h3>
+                <p>
+                    No. Every achievement here is newly generated for whatever you typed. Nothing is copied from the
+                    books — the goal is the <em>voice</em>, not the canon.
+                </p>
+
+                <h3>Is this official or affiliated with Matt Dinniman?</h3>
+                <p>
+                    No. This is an unofficial fan project, not affiliated with, endorsed by, or licensed from
+                    <a href="https://mattdinniman.com/" rel="noopener">Matt Dinniman</a> or the publishers of
+                    <em>Dungeon Crawler Carl</em>. If you found this before you found the
+                    books, fix that:
+                    <a href="https://www.dungeoncrawlercarl.com/" rel="noopener">start with book one</a>.
+                </p>
+
+                <h3>Is it free?</h3>
+                <p>
+                    Yes. No signup, no account, no payment. Close the tab and the System forgets you, which is more than
+                    it does in the books.
+                </p>
+            </div>
+
+            <p class="footer-legal">
+                Unofficial fan project. <em>Dungeon Crawler Carl</em> and all associated characters and concepts belong
+                to <a href="https://mattdinniman.com/" rel="noopener">Matt Dinniman</a>. Made by
+                <a href="https://carlkibler.com" rel="noopener">Carl Kibler</a> — a different
+                Carl, statistically less doomed.
+            </p>
+        </footer>
     </div>
 
     <script>
@@ -584,12 +1166,49 @@
             return framingVariants[Math.floor(Math.random() * framingVariants.length)](f);
         }
 
-        // Style pill selection
-        document.querySelectorAll('.style-pill').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.style-pill').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedStyle = btn.dataset.style;
+        // Announce a message to screen readers without moving focus or changing the view.
+        // Clearing first forces a re-announcement when the same text repeats.
+        function announce(message) {
+            const region = document.getElementById('srStatus');
+            if (!region) return;
+            region.textContent = '';
+            setTimeout(() => { region.textContent = message; }, 60);
+        }
+
+        const prefersReducedMotion = () =>
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const scrollBehavior = () => (prefersReducedMotion() ? 'auto' : 'smooth');
+
+        // Style picker — an ARIA radiogroup, so it announces "Brutal, radio button, 5 of 7"
+        // instead of seven unrelated buttons. Roving tabindex keeps it to one Tab stop;
+        // arrow keys move between options the way native radios do.
+        const stylePills = Array.from(document.querySelectorAll('.style-pill'));
+
+        function selectStyle(pill, { focus = false } = {}) {
+            stylePills.forEach(p => {
+                const isTarget = p === pill;
+                p.classList.toggle('active', isTarget);
+                p.setAttribute('aria-checked', String(isTarget));
+                p.tabIndex = isTarget ? 0 : -1;
+            });
+            selectedStyle = pill.dataset.style;
+            if (focus) pill.focus();
+        }
+
+        stylePills.forEach((pill, i) => {
+            pill.addEventListener('click', () => selectStyle(pill));
+
+            pill.addEventListener('keydown', (e) => {
+                const last = stylePills.length - 1;
+                let next = null;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = i === last ? 0 : i + 1;
+                else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = i === 0 ? last : i - 1;
+                else if (e.key === 'Home') next = 0;
+                else if (e.key === 'End') next = last;
+                if (next === null) return;
+                e.preventDefault();
+                selectStyle(stylePills[next], { focus: true });
             });
         });
 
@@ -1019,31 +1638,47 @@
                 <div class="skeleton-line sk-body2"></div>
                 <div class="skeleton-line sk-reward"></div>
             </div>`;
-            return `<div class="skeleton-cards" id="skeletonCards">${card}${card}${card}</div>`;
+            return `<div class="skeleton-cards" id="skeletonCards" aria-hidden="true">${card}${card}${card}</div>`;
         }
 
         async function generateAchievements() {
-            const input = document.getElementById('activityInput').value.trim();
+            const activityInput = document.getElementById('activityInput');
+            const inputError = document.getElementById('inputError');
+            const input = activityInput.value.trim();
+
             if (!input) {
-                alert('Please enter an activity first!');
+                // An inline role="alert" beats alert(): it announces itself, it doesn't
+                // trap focus, and it leaves the message on screen to refer back to.
+                inputError.textContent = 'Tell the System what you did first — the box is empty.';
+                inputError.hidden = false;
+                activityInput.setAttribute('aria-invalid', 'true');
+                activityInput.focus();
                 return;
             }
+            inputError.hidden = true;
+            activityInput.removeAttribute('aria-invalid');
 
             const btn = document.getElementById('generateBtn');
+            const btnLabel = document.getElementById('generateBtnLabel');
             const achievementsSection = document.getElementById('achievementsSection');
             const achievementsList = document.getElementById('achievementsList');
 
             const inputLabel = document.querySelector('.input-label');
             const labelTop = inputLabel.getBoundingClientRect().top + window.scrollY - 20;
-            window.scrollTo({ top: labelTop, behavior: 'smooth' });
+            window.scrollTo({ top: labelTop, behavior: scrollBehavior() });
 
             btn.disabled = true;
-            btn.textContent = '⏳ Summoning...';
+            btnLabel.textContent = 'Summoning…';
             achievementsSection.style.display = 'block';
+            achievementsSection.setAttribute('aria-busy', 'true');
+            announce('Generating achievements. This usually takes a few seconds.');
 
-            // Build loading panel
+            // Build loading panel. The whole thing is aria-hidden: it is theatre — a
+            // typewriter echo, a dossier flash, and a verdict line that swaps every 3.5s.
+            // Announcing any of that would interrupt the user on a loop. The single
+            // "Generating achievements" message above is what a screen reader gets.
             achievementsList.innerHTML = `
-                <div class="loading" id="loadingPanel">
+                <div class="loading" id="loadingPanel" aria-hidden="true">
                     <div class="loading-fx" id="loadingFx"></div>
                     <div class="loading-console">
                         <div class="loading-echo" id="loadingEcho"></div>
@@ -1058,10 +1693,10 @@
             const skCards = document.getElementById('skeletonCards');
             if (skCards) skCards.style.display = 'flex';
 
-            // Start visual FX
+            // Start visual FX — skipped entirely when the OS asks for reduced motion.
             stopEffect();
             const fxEl = document.getElementById('loadingFx');
-            if (fxEl) activeEffect = FX[Math.floor(Math.random() * FX.length)](fxEl);
+            if (fxEl && !prefersReducedMotion()) activeEffect = FX[Math.floor(Math.random() * FX.length)](fxEl);
 
             // Frame 1: echo-back (character by character)
             const echoEl = document.getElementById('loadingEcho');
@@ -1119,22 +1754,60 @@
                 displayAchievements(data.achievements);
                 saveToRecent(input, data.achievements, selectedStyle, currentFraming);
                 loadRecent();
-                achievementsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                achievementsSection.removeAttribute('aria-busy');
+                achievementsSection.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+
+                // Move focus to the results heading. Sighted users get the scroll; without
+                // this, a keyboard or screen reader user is left on the Generate button with
+                // no idea the page changed, and has to Tab back through everything to find it.
+                // The heading (not the first card) so the next Tab lands on the first action.
+                const heading = document.getElementById('achievementsHeading');
+                announce(`${data.achievements.length} achievements ready. ${data.achievements.map(plainTitle).join('. ')}.`);
+                if (heading) heading.focus({ preventScroll: true });
 
             } catch (error) {
                 clearInterval(verdictInterval);
                 stopEffect();
                 console.error('Error generating achievements:', error);
+                achievementsSection.removeAttribute('aria-busy');
                 achievementsList.innerHTML = `
-                    <div class="error">
-                        ⚠️ Failed to generate achievements: ${error.message}<br>
+                    <div class="error" role="alert">
+                        <span aria-hidden="true">⚠️</span>
+                        Failed to generate achievements: ${escapeHtml(error.message)}<br>
                         Please try again in a moment.
                     </div>
                 `;
             } finally {
                 btn.disabled = false;
-                btn.textContent = '⚔️ Generate Achievements';
+                btnLabel.textContent = 'Generate Achievements';
             }
+        }
+
+        // Titles carry a leading emoji. Strip it for spoken labels — screen readers
+        // otherwise announce "trophy Schrodinger's Developer" on every single button.
+        function plainTitle(achievement) {
+            const raw = typeof achievement === 'string' ? achievement : (achievement?.title || '');
+            return raw.replace(/^[\p{Emoji}\p{Emoji_Presentation}️\s]+/u, '').trim() || 'this achievement';
+        }
+
+        // Every action button repeats in every card, so each needs its own spoken label.
+        // Without this a screen reader reads "Copy, Image, Save, Copy, Image, Save…" with
+        // no way to tell which achievement any of them belongs to.
+        function cardActions(achievement, index, scope) {
+            const name = plainTitle(achievement);
+            const button = (action, emoji, text, label) => `
+                <button class="copy-btn"${action === 'copy' ? ` id="copy-${scope}-${index}"` : ''}
+                        data-action="${action}" data-index="${index}" data-scope="${scope}"
+                        aria-label="${escapeHtml(label)}">
+                    <span aria-hidden="true">${emoji}</span> ${text}
+                </button>`;
+            return `
+                <div class="achievement-actions">
+                    ${button('copy', '📋', 'Copy', `Copy “${name}” as text`)}
+                    ${button('image', '🖼️', 'Image', `Copy “${name}” as an image`)}
+                    ${button('download', '💾', 'Save', `Download “${name}” as an image`)}
+                    ${canNativeShare ? button('share', '📤', 'Share', `Share “${name}”`) : ''}
+                </div>`;
         }
 
         function displayAchievements(achievements) {
@@ -1144,49 +1817,37 @@
             const cards = achievements.map((achievement, index) => {
                 const { formattedText } = formatAchievement(achievement);
                 return `
-                    <div class="achievement" data-index="${index}" data-scope="main">
-                        <div class="achievement-actions">
-                            <button class="copy-btn" id="copy-main-${index}" data-action="copy" data-index="${index}" data-scope="main">
-                                📋 Copy
-                            </button>
-                            <button class="copy-btn" data-action="image" data-index="${index}" data-scope="main">
-                                🖼️ Image
-                            </button>
-                            <button class="copy-btn" data-action="download" data-index="${index}" data-scope="main">
-                                💾 Save
-                            </button>
-
-                            ${canNativeShare ? `<button class="copy-btn" data-action="share" data-index="${index}" data-scope="main">📤 Share</button>` : ''}
-                        </div>
+                    <li class="achievement" data-index="${index}" data-scope="main">
+                        ${cardActions(achievement, index, 'main')}
                         <div class="achievement-text">${formattedText}</div>
-                    </div>
+                    </li>
                 `;
             }).join('');
-            achievementsList.innerHTML = `
-                <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
-                    <button class="copy-btn" style="width:auto;" data-action="copy-all">📋 Copy all to Text</button>
-                    <button class="copy-btn" style="width:auto;" data-action="image-all">🖼️ Copy as 1 Image</button>
 
-                    ${canNativeShare ? '<button class="copy-btn" style="width:auto;" data-action="share-all">📤 Share as 1 Image</button>' : ''}
+            const count = achievements.length;
+            achievementsList.innerHTML = `
+                <div class="bulk-actions">
+                    <button class="copy-btn" style="width:auto;" data-action="copy-all"
+                            aria-label="Copy all ${count} achievements as text"><span aria-hidden="true">📋</span> Copy all to Text</button>
+                    <button class="copy-btn" style="width:auto;" data-action="image-all"
+                            aria-label="Copy all ${count} achievements as a single image"><span aria-hidden="true">🖼️</span> Copy as 1 Image</button>
+                    ${canNativeShare ? `<button class="copy-btn" style="width:auto;" data-action="share-all"
+                            aria-label="Share all ${count} achievements as a single image"><span aria-hidden="true">📤</span> Share as 1 Image</button>` : ''}
                 </div>
-                ${cards}
+                <ul class="achievement-list">${cards}</ul>
             `;
         }
 
-        function formatAchievement(achievement) {
+        // `level` keeps the heading outline legal: achievement titles sit at h3 in the
+        // main results, but at h4 inside a Recent entry, which has its own h3.
+        function formatAchievement(achievement, level = 3) {
             if (typeof achievement === 'string') {
                 return { formattedText: escapeHtml(achievement), copyText: achievement };
             }
             const formattedText = `
-                <div style="font-family:'Cormorant Garamond',Georgia,serif; font-style:italic; font-size:1.2em; line-height:1.3; color:var(--c-amber); margin-bottom:10px; text-shadow:0 0 10px rgba(230,166,116,0.35); word-spacing:0.2em;">
-                    ${escapeHtml(achievement.title)}
-                </div>
-                <div style="margin-bottom:10px; line-height:1.65; color:var(--c-ink);">
-                    ${escapeHtml(achievement.description)}
-                </div>
-                <div style="color:var(--c-muted); font-style:italic; padding-top:8px; border-top:1px solid var(--c-line-strong); font-size:0.88em;">
-                    ${escapeHtml(achievement.reward)}
-                </div>
+                <h${level} class="achievement-title">${escapeHtml(achievement.title)}</h${level}>
+                <p class="achievement-desc">${escapeHtml(achievement.description)}</p>
+                <p class="achievement-reward"><span class="sr-only">Reward: </span>${escapeHtml(achievement.reward)}</p>
             `;
             const copyText = `${achievement.title}\n${achievement.description}\n${achievement.reward}`;
             return { formattedText, copyText };
@@ -1220,10 +1881,14 @@
         }
 
         async function copyToClipboard(btn, text, htmlContent) {
-            const orig = btn.textContent;
+            // innerHTML, not textContent — the buttons contain an aria-hidden emoji span.
+            const orig = btn.innerHTML;
             const done = () => {
-                btn.textContent = '✅ Done!';
-                setTimeout(() => { btn.textContent = orig; }, 2000);
+                btn.innerHTML = '<span aria-hidden="true">✅</span> Done!';
+                // The visual label change is invisible to screen readers because these
+                // buttons carry an aria-label, so say it out loud separately.
+                announce('Copied to clipboard.');
+                setTimeout(() => { btn.innerHTML = orig; }, 2000);
             };
 
             // Preferred: clipboard.write with both HTML and plain text independently.
@@ -1696,45 +2361,40 @@
 
             recentSection.style.display = 'block';
             let recIdx = 0;
-            recentList.innerHTML = recent.slice(0, 5).map((entry, entryIdx) => `
-                <div style="margin-bottom:20px;padding:14px;border:1px solid #4a5568;border-radius:8px;background:rgba(0,0,0,0.2);">
-                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">
-                        <div style="color:#a0a6ad;font-size:0.85rem;">
-                            "${escapeHtml(entry.activity)}" — ${new Date(entry.timestamp).toLocaleDateString()}
-                            ${entry.style && entry.style !== 'default' ? `<span style="margin-left:6px;color:#ffd70099;">[${entry.style}]</span>` : ''}
-                        </div>
-                        <div style="display:flex;gap:6px;flex-shrink:0;">
-                            <button class="copy-btn" style="width:auto;" data-action="copy-all" data-entry-idx="${entryIdx}">📋 Copy all to Text</button>
-                            <button class="copy-btn" style="width:auto;" data-action="image-all" data-entry-idx="${entryIdx}">🖼️ Copy as 1 Image</button>
-                            ${canNativeShare ? `<button class="copy-btn" style="width:auto;" data-action="share-all" data-entry-idx="${entryIdx}">📤 Share as 1 Image</button>` : ''}
+            recentList.innerHTML = recent.slice(0, 5).map((entry, entryIdx) => {
+                const when = new Date(entry.timestamp).toLocaleDateString();
+                const label = `“${entry.activity}” from ${when}`;
+                return `
+                <article class="recent-entry" aria-labelledby="recentEntry${entryIdx}">
+                    <div class="recent-entry-head">
+                        <h3 class="recent-entry-title" id="recentEntry${entryIdx}">
+                            "${escapeHtml(entry.activity)}" — <span class="recent-entry-date">${when}</span>
+                            ${entry.style && entry.style !== 'default' ? `<span class="recent-entry-style">[${escapeHtml(entry.style)}]</span>` : ''}
+                        </h3>
+                        <div class="recent-entry-actions">
+                            <button class="copy-btn" style="width:auto;" data-action="copy-all" data-entry-idx="${entryIdx}"
+                                    aria-label="Copy all achievements from ${escapeHtml(label)} as text"><span aria-hidden="true">📋</span> Copy all to Text</button>
+                            <button class="copy-btn" style="width:auto;" data-action="image-all" data-entry-idx="${entryIdx}"
+                                    aria-label="Copy all achievements from ${escapeHtml(label)} as a single image"><span aria-hidden="true">🖼️</span> Copy as 1 Image</button>
+                            ${canNativeShare ? `<button class="copy-btn" style="width:auto;" data-action="share-all" data-entry-idx="${entryIdx}"
+                                    aria-label="Share all achievements from ${escapeHtml(label)} as a single image"><span aria-hidden="true">📤</span> Share as 1 Image</button>` : ''}
                         </div>
                     </div>
+                    <ul class="achievement-list">
                     ${entry.achievements.map((ach) => {
-                        const { formattedText } = formatAchievement(ach);
+                        const { formattedText } = formatAchievement(ach, 4);
                         const idx = recIdx++;
                         return `
-                            <div class="achievement" style="margin-bottom:8px;animation:none;opacity:1;"
-                                 data-index="${idx}" data-scope="recent">
-                                <div class="achievement-actions">
-                                    <button class="copy-btn" id="copy-recent-${idx}"
-                                            data-action="copy" data-index="${idx}" data-scope="recent">
-                                        📋 Copy
-                                    </button>
-                                    <button class="copy-btn" data-action="image" data-index="${idx}" data-scope="recent">
-                                        🖼️ Image
-                                    </button>
-                                    <button class="copy-btn" data-action="download" data-index="${idx}" data-scope="recent">
-                                        💾 Save
-                                    </button>
-
-                                    ${canNativeShare ? `<button class="copy-btn" data-action="share" data-index="${idx}" data-scope="recent">📤 Share</button>` : ''}
-                                </div>
-                                <div class="achievement-text" style="font-size:0.88rem;">${formattedText}</div>
-                            </div>
+                            <li class="achievement is-recent" data-index="${idx}" data-scope="recent">
+                                ${cardActions(ach, idx, 'recent')}
+                                <div class="achievement-text is-recent">${formattedText}</div>
+                            </li>
                         `;
                     }).join('')}
-                </div>
-            `).join('');
+                    </ul>
+                </article>
+            `;
+            }).join('');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
