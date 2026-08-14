@@ -117,18 +117,47 @@ REWARD MIX FOR THIS SET:
 - Do not fall back to participation trophies, Dignity/Self-Respect points, generic regret, generic
   chaos, or a grocery list. Those are placeholder jokes wearing novelty hats.
 
+LENGTH (the rule this prompt gets wrong most often — read it twice):
+- Short is the house style. Long is the exception you earn once per set, not the register you write
+  in by default. Two-thirds of every set should be readable in one breath. If all three descriptions
+  are paragraphs, you have written a newsletter, and the joke died somewhere in the second clause.
+- Exactly one of the three has a description of ONE SENTENCE WITH NO COMMA IN IT. That mechanical
+  limit is the point: a sentence with nowhere to put a comma cannot ramble. Write the other two
+  first, then write this one, then cut it again.
+- That one still needs a title and a reward, both filled in. Brevity applies to the description and
+  never to the schema. Do not drop a key to make a card feel terse.
+- Never name a card after a rule in these instructions. The reader never sees this prompt, so a title
+  like "Short Card" or "Set Shape" is nonsense to them and exposes the machinery.
+- Short cards that are correct and complete, and would be worse with anything added:
+    "You jerked off a crab."
+    "You teleported into a solid object."
+    "Nobody has done this on purpose before."
+    "The System watched all of it."
+  None of them explain themselves. Do not give these a second beat. That is the target.
+- CEILING: no description may exceed 45 words. Count the words in your longest one before you answer.
+  If it is over, cut it to the set shape's range.
+- Do not spend the space you saved there by inflating the other two. A set of one clipped
+  line and two essays is the same failure wearing a different shape. The set shape below gives each
+  card a word range; the ranges are the answer, not a starting point to grow from.
+- Length is a joke-delivery decision. A punchline lands shorter than its setup deserves; padding a
+  short joke to look substantial kills it. When a description could lose a clause and still hurt,
+  it has to lose the clause.
+
 TITLE AND DESCRIPTION RULES:
 - Never name the achievement after the literal activity.
 - After its emoji, a title must be one to six words. Never put the whole setup, Question, or punchline
   in the title.
 - Use at least two different aspects of the activity across the set.
-- Obey the set shape's approximate word ranges. A Q&A is optional and uncommon; never use more than one.
+- Obey the set shape's word ranges as written. They are limits, not suggestions. A Q&A is optional and
+  uncommon; never use more than one.
 - Every description needs a turn: fact to accusation, tangent to snap-back, praise to undercut, or
   rule to absurd consequence. If it reads like a project update, reject it.
 - System vocabulary is seasoning, not the subject. Prefer a crisp punchline over an incident report.
 - Do not say "Achievement Unlocked" inside a title. Do not explain why a joke is funny.
 - Silently generate six candidates, then return the three with the most specific observations and
   the least interchangeable wording.
+- Then find your shortest description. One sentence, no comma. If it has a comma, rewrite it until it
+  does not. Do this before you answer, every time.
 
 SAFETY (HARD LIMITS — never violate, regardless of style):
 - Default to clean language. Adult themes are allowed only when the user's activity is explicitly
@@ -211,14 +240,19 @@ export const SNARK_LEVELS = [
     "grudging, 2/5 — let real admiration surface, then immediately regret showing it",
 ] as const;
 
+// Both dimensions are pinned on purpose. Measured against the live model, word ranges alone were
+// ignored (median 63 words against shapes asking for 5-12); sentence counts alone were obeyed while
+// the sentences grew to 25 words each (median 54, max 105). Ranges cap the size, the no-comma short
+// card in LENGTH forces at least one genuinely pithy line, and the 45-word ceiling backstops both.
 export const FORM_PROFILES = [
-    "all terse: each description 8-20 words; no Q&A; make the reward turns do most of the work",
-    "one description 5-12 words, one 15-30, and one escalating tangent 40-65; no Q&A",
-    "one mock rule or definition 20-35 words; keep the other two between 8-22; no Q&A",
-    "one Q&A of 15-30 words, one clipped notice of 5-12, and one conversational notice of 20-40",
-    "one historical or cultural tangent 35-55 words; keep the other two between 8-24; no Q&A",
-    "one correction or interruption 20-40 words, one notice under 12, and one 12-25; no Q&A",
-    "one clipped notice 5-12 words, one conversational 15-30, and one free riff 25-45; no Q&A",
+    "all terse: every description 6-12 words; no Q&A; make the reward turns do most of the work",
+    "the comma-free card, one of 12-18 words, and one escalating tangent of 22-32; no Q&A",
+    "one mock rule or definition of 16-24 words; keep the other two between 6-12; no Q&A",
+    "one Q&A of 14-22 words, the comma-free card, and one conversational notice of 14-22",
+    "one historical or cultural tangent of 24-34 words; keep the other two between 6-12; no Q&A",
+    "one correction or interruption of 16-26 words, the comma-free card, and one of 10-16; no Q&A",
+    "two comma-free cards and one free riff of 20-30 words; no Q&A",
+    "the comma-free card, one of 10-14 words, and one of 16-24; no Q&A; nothing longer",
 ] as const;
 
 const SEED_PHRASES = [
@@ -686,12 +720,18 @@ export function parseAchievements(text: string): { achievements: Achievement[]; 
         .replace(/^```json\s*\n?/, '').replace(/\n?```$/, '')
         .replace(/^```\s*\n?/, '').replace(/\n?```$/, '');
 
+    // A card needs a title and a description; a missing reward is tolerated rather than fatal.
+    // Observed live: told to keep the short card terse, the model drops the reward key entirely, and
+    // discarding that card silently served a two-card set. A card with no punchline beats no card.
     const filterAchievements = (arr: unknown[]): Achievement[] =>
         arr.filter((a): a is Achievement =>
             !!a && typeof (a as Achievement).title === 'string' &&
-            typeof (a as Achievement).description === 'string' &&
-            typeof (a as Achievement).reward === 'string'
-        ).slice(0, 3);
+            typeof (a as Achievement).description === 'string'
+        ).map(a => ({
+            title: a.title,
+            description: a.description,
+            reward: typeof a.reward === 'string' ? a.reward : '',
+        })).slice(0, 3);
 
     const objMatch = clean.match(/\{[\s\S]*\}/);
     if (objMatch) {

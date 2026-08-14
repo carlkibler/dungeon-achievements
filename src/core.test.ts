@@ -309,10 +309,23 @@ describe('achievement prompt', () => {
 
         expect(prompt).toContain('149 CANON ACHIEVEMENTS');
         expect(prompt).toContain('Give one or two precisely named loot boxes');
-        expect(prompt).toContain('A Q&A is optional and uncommon');
+        expect(prompt).toContain('A Q&A is optional');
         expect(prompt).not.toContain('Lukewarm Participation Trophy');
         expect(prompt).not.toContain('Dignity -7');
         expect(prompt).not.toContain('{{');
+    });
+
+    // Every length constraint here was, at some point, being ignored while reading fine in the file.
+    // `make style` is what proves they bind; these only prove they are still present.
+    it('pins both length dimensions, since naming only one inflates the other', () => {
+        const { prompt } = buildPrompt('washed the dishes', 'default', [], []);
+
+        expect(prompt).toContain('ONE SENTENCE WITH NO COMMA IN IT');
+        expect(prompt).toContain('Short is the house style');
+        expect(prompt).toContain('no description may exceed 45 words');
+        expect(prompt).toMatch(/SET SHAPE: .*\d+-\d+ words|SET SHAPE: .*comma-free/);
+        // A rule that gets a proper noun ends up as a card title. It happened.
+        expect(prompt).toContain('Never name a card after a rule');
     });
 
     it('gives the model a way to decline that the site can actually render', () => {
@@ -325,7 +338,7 @@ describe('achievement prompt', () => {
     it('keeps mood, snark, and form as independent variation axes', () => {
         expect(MOODS).toHaveLength(7);
         expect(SNARK_LEVELS).toHaveLength(5);
-        expect(FORM_PROFILES).toHaveLength(7);
+        expect(FORM_PROFILES).toHaveLength(8);
         expect(FORM_PROFILES.filter(profile => profile.startsWith('one Q&A'))).toHaveLength(1);
         expect(MOODS.some(mood => mood.includes('tender'))).toBe(false);
     });

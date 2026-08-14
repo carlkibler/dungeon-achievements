@@ -68,6 +68,19 @@ Serverless web app that generates amusing fake achievements in the style of the 
   `DECLINE_CARDS`, so someone poking at the box does not get the same refusal twice. A new card must
   stand alone beside any other two: unique emoji, unique punchline, no restating the activity, and it
   never congratulates anyone. Unit tests enforce all four.
+- **Length rules in the prompt are unfalsifiable by reading them — run `make style`.** Measured
+  2026-08-13: the model wrote a median of 63 words per description against set shapes asking for 5-12,
+  and not one set contained a short card. Four things were tried, and only the combination works:
+  word ranges alone were ignored; sentence counts alone were obeyed while sentences grew to 25 words
+  (median 54, max 105); the register line ("short is the house style, long is the exception you earn
+  once per set") moves the whole distribution; and the mechanical no-comma rule is what actually
+  produces a pithy card. Whatever dimension you leave unnamed is the one that inflates. Current
+  baseline: median 35, p75 41, max 57, 12/16 sets with a comma-free card under 15 words.
+- **The model drops the `reward` key on very short cards**, which used to silently serve a two-card
+  set — `filterAchievements` discarded the card. It now tolerates a missing reward and the frontend
+  omits the empty paragraph rather than reading "Reward:" to a screen reader with nothing after it.
+- **Never give a prompt rule a proper-noun label.** Naming the brevity rule "the SHORT CARD" got a
+  card titled "📋 The Short Card" shipped into output. Describe mechanisms, don't christen them.
 - **Do not tune the prompt toward caution without re-running the input battery.** The failure mode this
   project cares about is over-refusal: "I murdered that test", "rawdogged my full run no music", grief,
   chemo, sobriety, and ordinary vice all have to come back as achievements. `DO NOT OVER-REFUSE` in
@@ -113,6 +126,7 @@ make secret     # set OPENROUTER_API_KEY in CF
 make typecheck  # TypeScript type checking
 make seo        # metadata, DCC keywords, FAQ/JSON-LD sync, og.png, robots, sitemap
 make a11y       # axe + keyboard/focus + reflow (needs `make dev` running)
+make style      # sample real generations, measure achievement length (costs API calls)
 make vendor     # public/vendor/ still matches the pinned package
 npm test        # vitest — provider fallback chain and parsing
 ```
@@ -141,6 +155,7 @@ server.ts               # Node adapter (API only — no static files, no degrade
 scripts/
 ├── check-seo.mjs       # Guards metadata + FAQ/JSON-LD sync (no deps)
 ├── check-a11y.mjs      # axe + keyboard/focus + reflow (needs playwright)
+├── check-style.mjs     # samples live generations, measures length distribution
 ├── check-vendor.mjs    # public/vendor/ vs the pinned package (no deps)
 ├── check-deps-age.js   # 14-day supply-chain cooldown, runs on postinstall
 ├── analytics-report.js # CLI analytics dashboard

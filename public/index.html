@@ -1921,12 +1921,18 @@
             if (typeof achievement === 'string') {
                 return { formattedText: escapeHtml(achievement), copyText: achievement };
             }
+            // The reward can be absent — the model sometimes drops it on a very short card. An empty
+            // paragraph would still read out "Reward:" to a screen reader, so leave it out entirely.
+            const reward = achievement.reward?.trim()
+                ? `<p class="achievement-reward"><span class="sr-only">Reward: </span>${escapeHtml(achievement.reward)}</p>`
+                : '';
             const formattedText = `
                 <h${level} class="achievement-title">${escapeHtml(achievement.title)}</h${level}>
                 <p class="achievement-desc">${escapeHtml(achievement.description)}</p>
-                <p class="achievement-reward"><span class="sr-only">Reward: </span>${escapeHtml(achievement.reward)}</p>
+                ${reward}
             `;
-            const copyText = `${achievement.title}\n${achievement.description}\n${achievement.reward}`;
+            const copyText = [achievement.title, achievement.description, achievement.reward]
+                .filter(part => part && part.trim()).join('\n');
             return { formattedText, copyText };
         }
 
