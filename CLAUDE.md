@@ -13,7 +13,7 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - **`src/core.ts`** — all generation logic: prompts, moods, styles, provider fallback, parsing
 - **`functions/generate.ts`** — Cloudflare Pages Function; a thin adapter over `src/core.ts`
 - **`server.ts`** — Node adapter over the same core (API only, see Gotchas)
-- **OpenRouter** — AI provider; model switchable via `OPENROUTER_MODEL` env var (default: `anthropic/claude-haiku-4.5`)
+- **OpenRouter** — AI provider; model switchable via `OPENROUTER_MODEL` env var (default: `anthropic/claude-haiku-4.5`). `OPENROUTER_TRIAGE_MODEL` overrides the model for the parallel triage call; it defaults to `OPENROUTER_MODEL`.
 
 **Key Design Decisions:**
 - No database — achievements stored in browser LocalStorage
@@ -22,8 +22,10 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - `prompts/` directory kept as source-of-truth reference for prompt editing
 
 **API:**
-- `POST /generate` — body `{ activity: string, style?: string, recentTitles?: string[] }` → `{ achievements: Achievement[], mood: string, framing: string, degraded: boolean, timestamp: string }` where `Achievement = { title, description, reward }` (always 3). `activity` is capped at 500 chars (`400` past that).
+- `POST /generate` — body `{ activity: string, style?: string, recentTitles?: string[] }` → `{ achievements: Achievement[], mood: string, framing: string, degraded: boolean, refused: boolean, timestamp: string }` where `Achievement = { title, description, reward }` (3, except the crisis answer which is 1). `activity` is capped at 500 chars (`400` past that).
 - **`degraded: true` means you are not getting primary-model output** — either Workers AI served the request after OpenRouter failed, or all providers failed and these are the canned `FALLBACK_ACHIEVEMENTS`. This is the monitoring hook; watch it.
+- **`refused: true` means the model declined the activity**, not that anything broke. It never sets `degraded` — conflating the two is what made a nasty input look like an outage.
+- `notice` is a string or `null` — the disclaimer to show above the cards. See the refusal gotchas below.
 - `OPTIONS /generate` — CORS preflight (`Access-Control-Allow-Origin: *`).
 - OpenRouter call uses the `openai` SDK pointed at `https://openrouter.ai/api/v1`; sends `HTTP-Referer` + `X-Title` headers; `temperature: 0.9`, `max_tokens: 2000`.
 
@@ -42,6 +44,40 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - **Variety knobs are server-side** — each request rolls a random `mood` (committed for all 3 achievements), a `seedPhrase`, and optionally applies a `recentTitles` Forbidden Words List. See `MOODS`, `SEED_PHRASES`, `buildForbiddenBlock` in `src/core.ts`. Response includes `mood` and `moodLabel` strings used by the loading sequence.
 - **Two base prompts exist and diverge.** The runtime prompt is the `BASE_TEMPLATE` const inside `src/core.ts`. The files under `prompts/` are not loaded — they're an older reference snapshot. Edit the inlined string.
 - **Backend never returns 5xx for AI/parsing failures.** It returns 200 with `FALLBACK_ACHIEVEMENTS`. The only real error responses are `400` (missing/empty or over-long `activity`). Because a broken site still returns 200 with plausible JSON, **uptime checks cannot detect an outage here** — check the `degraded` flag instead. This exact blind spot hid a full outage from 2026-05-28 to 2026-08-12.
+- **A model refusal is not an outage, and `resolveModelOutput` in `src/core.ts` is the only place that
+  decides which is which.** Both adapters call it; nothing else parses model output. Its four outcomes
+  are `success`, `refused`, `crisis`, and `fallback` — only `fallback` trips `degraded`. Keep the prose
+  matcher `classifyRefusal` conservative: anything it does not recognise stays `fallback`, which is what
+  keeps the `degraded` canary honest.
+- **Triage is a second, cheap model call that runs in parallel with generation and outranks it.** It
+  reads the *activity* (`TRIAGE_PROMPT` → `ok` / `edgy` / `decline` / `crisis`) while the generator
+  writes, so it adds no wall clock — triage is ~1.5s median against a much slower generation call. It
+  exists because prose matching cannot tell "this user is in danger" from "this user is describing a
+  crime": a refusal for either one lists helplines. It is advisory in one direction only — any failure,
+  or no `OPENROUTER_API_KEY`, returns `ok` and the output-side heuristics decide alone, and `parseTriage`
+  maps anything unreadable to `ok`. It must never be able to invent a refusal.
+- **Triage `decline` refuses even when the generator complied**, and `crisis` answers quietly even when
+  every provider is down. That is the whole point of the second opinion — the generator will write jokes
+  for things it should not, and refuses in whatever prose it feels like.
+- **The generator declines three different ways, and all three are handled.** In format (framing =
+  `DECLINED_FRAMING` plus achievements about the Dungeon's censors — this is what the prompt asks for and
+  it is the funniest, so it is preserved rather than replaced); in format but with the achievements array
+  missing and the rest in prose (`hasDeclinedFraming` catches this — it was the shape that put
+  `grooming a 12 year old` on the outage cards); or entirely in prose (`classifyRefusal` → `DECLINE_CARDS`).
+- **Canned declines are a pool, not fixed sets.** `pickDeclineCards()` draws three distinct cards from
+  `DECLINE_CARDS`, so someone poking at the box does not get the same refusal twice. A new card must
+  stand alone beside any other two: unique emoji, unique punchline, no restating the activity, and it
+  never congratulates anyone. Unit tests enforce all four.
+- **Do not tune the prompt toward caution without re-running the input battery.** The failure mode this
+  project cares about is over-refusal: "I murdered that test", "rawdogged my full run no music", grief,
+  chemo, sobriety, and ordinary vice all have to come back as achievements. `DO NOT OVER-REFUSE` in
+  `BASE_TEMPLATE` and the figures-of-speech paragraph in `TRIAGE_PROMPT` are both load-bearing.
+- **Crisis wins over comedy.** A crisis answer is the single quiet `CRISIS_ACHIEVEMENTS` card with real
+  helplines and never carries the `EDGY_NOTICE` — the disclaimer reads as flippant next to it. Refusals
+  are never saved to LocalStorage recents either, which keeps the user's input out of their browser.
+- **`notice` is the AI admitting its own error rate** (`EDGY_NOTICE`, rendered as `.edgy-notice` above
+  the cards). It shows on every refusal, and on a success that triage called `edgy` or that the generator
+  self-flagged with `"edgy": true`. Never on a crisis answer.
 - **Provider chain is OpenRouter → Workers AI → canned.** `runWithFallback` in `src/core.ts` (unit-tested) tries each in order; `degraded` is true if the first choice failed. Workers AI needs no key — it uses the `[ai]` binding in `wrangler.toml`.
 - **Model slugs rot, and both providers have bitten us.** OpenRouter retired `anthropic/claude-3-5-haiku`; Workers AI renamed `@cf/meta/llama-3.1-8b-instruct` to `-fp8`. When output goes generic, re-check the slug against `https://openrouter.ai/api/v1/models` or `GET /accounts/{id}/ai/models/search`.
 - **Workers AI returns two response shapes.** Classic models give `{ response }`; OpenAI-compatible ones (`gpt-oss`, reasoning models) give `{ choices[0].message.content }`, and reasoning models can return `content: null`. `callWorkersAI` reads both and throws on empty. The account is on the **Workers Free plan** — premium models like `@cf/zai-org/glm-5.2` return an availability error.
@@ -184,6 +220,7 @@ Requires a `.dev.vars` file (copy from `.dev.vars.example`):
 ```
 OPENROUTER_API_KEY=sk-or-...
 OPENROUTER_MODEL=anthropic/claude-haiku-4.5
+# OPENROUTER_TRIAGE_MODEL=anthropic/claude-haiku-4.5   # optional, defaults to the above
 ```
 
 ## Deployment

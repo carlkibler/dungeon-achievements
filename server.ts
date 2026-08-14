@@ -12,11 +12,15 @@
 
 import { createServer, IncomingMessage, ServerResponse } from 'http';
 import OpenAI from 'openai';
-import { buildPrompt, parseAchievements, FALLBACK_ACHIEVEMENTS, FALLBACK_MOOD, type GenerateRequest } from './src/core';
+import {
+    buildPrompt, buildTriagePrompt, parseTriage, resolveModelOutput,
+    FALLBACK_ACHIEVEMENTS, FALLBACK_MOOD, type GenerateRequest, type Triage,
+} from './src/core';
 
 const PORT = parseInt(process.env.PORT ?? '8787', 10);
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5';
+const OPENROUTER_TRIAGE_MODEL = process.env.OPENROUTER_TRIAGE_MODEL ?? OPENROUTER_MODEL;
 
 if (!OPENROUTER_API_KEY) {
     console.error('OPENROUTER_API_KEY is required');
@@ -37,6 +41,22 @@ const CORS = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+/** Advisory: any failure returns 'ok' and the output-side heuristics decide alone. */
+async function triageActivity(activity: string): Promise<Triage> {
+    try {
+        const message = await client.chat.completions.create({
+            model: OPENROUTER_TRIAGE_MODEL,
+            max_tokens: 5,
+            temperature: 0,
+            messages: [{ role: 'user', content: buildTriagePrompt(activity) }],
+        });
+        return parseTriage(message.choices[0]?.message?.content ?? '');
+    } catch (err) {
+        console.error('Triage failed; deciding from model output alone:', err);
+        return 'ok';
+    }
+}
 
 function readBody(req: IncomingMessage): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -80,7 +100,14 @@ const server = createServer(async (req, res) => {
 
         let achievements = FALLBACK_ACHIEVEMENTS;
         let framing = body.activity.trim();
+        let outcome = 'fallback';
+        let voice = mood;
+        let notice: string | null = null;
 
+        // Started before generation is awaited so the two run together.
+        const triagePromise = triageActivity(body.activity.trim());
+
+        let text = '';
         try {
             const message = await client.chat.completions.create({
                 model: OPENROUTER_MODEL,
@@ -89,20 +116,32 @@ const server = createServer(async (req, res) => {
                 seed: Math.floor(Math.random() * 2147483647),
                 messages: [{ role: 'user', content: prompt }],
             });
-            const text = message.choices[0]?.message?.content ?? '';
-            const parsed = parseAchievements(text);
-            if (parsed.achievements.length > 0) achievements = parsed.achievements;
-            if (parsed.framing) framing = parsed.framing;
+            text = message.choices[0]?.message?.content ?? '';
         } catch (err) {
             console.error('LLM error:', err);
         }
 
-        console.log(`[${new Date().toISOString()}] ${style} — ${Date.now() - t0}ms`);
-        send(res, 200, { achievements, mood, framing, timestamp: new Date().toISOString() });
+        const triage = await triagePromise;
+        const resolved = resolveModelOutput(text, framing, triage);
+        achievements = resolved.achievements;
+        framing = resolved.framing;
+        outcome = resolved.outcome;
+        notice = resolved.notice ?? null;
+        if (resolved.mood) voice = resolved.mood;
+
+        console.log(`[${new Date().toISOString()}] ${style} — ${outcome} (triage: ${triage}) — ${Date.now() - t0}ms`);
+        send(res, 200, {
+            achievements,
+            mood: voice,
+            framing,
+            refused: outcome === 'refused' || outcome === 'crisis',
+            notice,
+            timestamp: new Date().toISOString(),
+        });
 
     } catch (err) {
         console.error('Request error:', err);
-        send(res, 200, { achievements: FALLBACK_ACHIEVEMENTS, mood: FALLBACK_MOOD, framing: '', timestamp: new Date().toISOString() });
+        send(res, 200, { achievements: FALLBACK_ACHIEVEMENTS, mood: FALLBACK_MOOD, framing: '', refused: false, notice: null, timestamp: new Date().toISOString() });
     }
 });
 

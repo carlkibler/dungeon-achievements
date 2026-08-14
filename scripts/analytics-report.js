@@ -132,6 +132,11 @@ async function main() {
             count()                              AS total,
             countIf(blob4 = 'success')           AS successes,
             countIf(blob4 = 'fallback')          AS fallbacks,
+            countIf(blob4 = 'refused')           AS refusals,
+            countIf(blob4 = 'crisis')            AS crisis,
+            countIf(blob7 = 'edgy')              AS tri_edgy,
+            countIf(blob7 = 'decline')           AS tri_decline,
+            countIf(blob7 = 'crisis')            AS tri_crisis,
             round(avg(double1))                  AS avg_ms,
             round(avg(double2))                  AS avg_activity_chars,
             count(DISTINCT blob2)                AS uniq_countries
@@ -145,6 +150,10 @@ async function main() {
     kv('Total generations',       String(ov.total),           C.gold + C.bold);
     kv('Successful',              String(ov.successes),        C.green);
     kv('Fallbacks (AI errors)',   String(ov.fallbacks),        +ov.fallbacks > 0 ? C.red : C.dim);
+    kv('Refused (declined)',      String(ov.refusals),         +ov.refusals > 0 ? C.amber : C.dim);
+    kv('Crisis responses',        String(ov.crisis),           +ov.crisis > 0 ? C.amber : C.dim);
+    kv('Triage: edgy / decline / crisis',
+       `${ov.tri_edgy} / ${ov.tri_decline} / ${ov.tri_crisis}`, C.dim);
     kv('Avg response time',       ov.avg_ms != null ? `${ov.avg_ms} ms` : '—');
     kv('Avg activity length',     ov.avg_activity_chars != null ? `${ov.avg_activity_chars} chars` : '—');
     kv('Unique countries',        String(ov.uniq_countries));

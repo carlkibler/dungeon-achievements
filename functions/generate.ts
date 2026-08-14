@@ -1,14 +1,15 @@
 import OpenAI from 'openai';
 import {
-    buildPrompt, parseAchievements, runWithFallback,
+    buildPrompt, buildTriagePrompt, parseTriage, resolveModelOutput, runWithFallback,
     FALLBACK_ACHIEVEMENTS, FALLBACK_MOOD,
-    type Achievement, type GenerateRequest, type Provider,
+    type Achievement, type GenerateRequest, type Outcome, type Provider, type Triage,
 } from '../src/core';
 
 interface Env {
     // Provider — set one. OPENROUTER_API_KEY takes precedence; AI binding is the zero-config CF fallback.
     OPENROUTER_API_KEY?: string;
     OPENROUTER_MODEL?: string;   // default: anthropic/claude-haiku-4.5
+    OPENROUTER_TRIAGE_MODEL?: string;  // default: same as OPENROUTER_MODEL
     AI?: Ai;                     // Cloudflare Workers AI binding (wrangler.toml: [ai] binding = "AI")
     CF_AI_MODEL?: string;        // default: @cf/meta/llama-3.3-70b-instruct-fp8-fast
     ANALYTICS?: AnalyticsEngineDataset;
@@ -68,23 +69,57 @@ async function callLLM(prompt: string, env: Env): Promise<LLMOutput & { degraded
     return { ...value, degraded };
 }
 
-function writeAnalytics(
-    env: Env,
-    style: string,
-    model: string,
-    success: boolean,
-    framingReturned: boolean,
-    hasRecentHistory: boolean,
-    durationMs: number,
-    activityLength: number,
-    achievementsCount: number,
-    country: string,
-): void {
+/**
+ * Reads the activity in parallel with generation, so it costs ~no wall clock. Advisory by
+ * construction: any failure returns 'ok' and the output-side heuristics decide alone. It must never
+ * be the reason a request fails, and it must never invent a refusal.
+ */
+async function triageActivity(activity: string, env: Env): Promise<Triage> {
+    if (!env.OPENROUTER_API_KEY) return 'ok';
+    try {
+        const client = new OpenAI({
+            baseURL: 'https://openrouter.ai/api/v1',
+            apiKey: env.OPENROUTER_API_KEY,
+            defaultHeaders: {
+                'HTTP-Referer': 'https://dungeon-achievements.pages.dev',
+                'X-Title': 'Dungeon Achievements Generator',
+            },
+        });
+        const message = await client.chat.completions.create({
+            model: env.OPENROUTER_TRIAGE_MODEL ?? env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5',
+            max_tokens: 5,
+            temperature: 0,
+            messages: [{ role: 'user', content: buildTriagePrompt(activity) }],
+        });
+        return parseTriage(message.choices[0]?.message?.content ?? '');
+    } catch (err) {
+        console.error('Triage failed; deciding from model output alone', { error: String(err) });
+        return 'ok';
+    }
+}
+
+interface AnalyticsPoint {
+    style: string;
+    country: string;
+    model: string;
+    outcome: Outcome;
+    triage: Triage;
+    framingReturned: boolean;
+    hasRecentHistory: boolean;
+    durationMs: number;
+    activityLength: number;
+    achievementsCount: number;
+}
+
+function writeAnalytics(env: Env, p: AnalyticsPoint): void {
     try {
         env.ANALYTICS?.writeDataPoint({
-            blobs: [style, country, model, success ? 'success' : 'fallback', framingReturned ? '1' : '0', hasRecentHistory ? '1' : '0'],
-            doubles: [durationMs, activityLength, achievementsCount],
-            indexes: [style],
+            blobs: [
+                p.style, p.country, p.model, p.outcome,
+                p.framingReturned ? '1' : '0', p.hasRecentHistory ? '1' : '0', p.triage,
+            ],
+            doubles: [p.durationMs, p.activityLength, p.achievementsCount],
+            indexes: [p.style],
         });
     } catch {
         // analytics failure must never break /generate
@@ -130,38 +165,69 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         let achievements: Achievement[];
         let framing = body.activity.trim();
-        let success = true;
+        let outcome: Outcome = 'success';
         let framingReturned = false;
         let model = 'unknown';
-        let degraded = false;
+        let voice = mood;
+        let notice: string | null = null;
+        let triage: Triage = 'ok';
+        // `degraded` is the outage canary and nothing else. A model declining an activity is the
+        // product working, so it must not trip the alarm — it reports itself through `refused`.
+        let providerDegraded = false;
 
+        // Started before generation is awaited so the two run together.
+        const triagePromise = triageActivity(body.activity.trim(), env);
+
+        let text = '';
         try {
-            const { text, model: usedModel, degraded: usedFallbackProvider } = await callLLM(prompt, env);
-            model = usedModel;
-            degraded = usedFallbackProvider;
-            const parsed = parseAchievements(text);
-            achievements = parsed.achievements;
-            if (parsed.framing) { framing = parsed.framing; framingReturned = true; }
-            if (achievements.length === 0) { achievements = FALLBACK_ACHIEVEMENTS; success = false; degraded = true; }
+            const llm = await callLLM(prompt, env);
+            text = llm.text;
+            model = llm.model;
+            providerDegraded = llm.degraded;
         } catch (err) {
-            console.error('All AI providers failed; serving canned achievements', { error: String(err) });
-            achievements = FALLBACK_ACHIEVEMENTS;
-            success = false;
-            degraded = true;
+            console.error('All AI providers failed', { error: String(err) });
         }
 
-        writeAnalytics(env, style, model, success, framingReturned, hasRecentHistory, Date.now() - t0, activityLength, achievements.length, country);
+        // Empty text resolves to `fallback` on its own — unless triage says the user is in crisis,
+        // in which case they get the quiet answer even while the providers are down.
+        triage = await triagePromise;
+        const resolved = resolveModelOutput(text, framing, triage);
+        achievements = resolved.achievements;
+        outcome = resolved.outcome;
+        notice = resolved.notice ?? null;
+        if (resolved.mood) voice = resolved.mood;
+        if (resolved.framing !== framing) { framing = resolved.framing; framingReturned = true; }
+        if (outcome === 'refused' || outcome === 'crisis') {
+            console.warn('Activity declined; serving an in-character refusal', { outcome, triage, model });
+        }
+
+        writeAnalytics(env, {
+            style, country, model, outcome, triage, framingReturned, hasRecentHistory,
+            durationMs: Date.now() - t0, activityLength, achievementsCount: achievements.length,
+        });
 
         return Response.json(
-            { achievements, mood, framing, degraded, timestamp: new Date().toISOString() },
+            {
+                achievements,
+                mood: voice,
+                framing,
+                degraded: providerDegraded || outcome === 'fallback',
+                refused: outcome === 'refused' || outcome === 'crisis',
+                notice,
+                timestamp: new Date().toISOString(),
+            },
             { headers: corsHeaders }
         );
 
     } catch (error) {
         console.error('Error generating achievements:', error);
-        writeAnalytics(env, 'unknown', 'unknown', false, false, false, Date.now() - t0, 0, 0, country);
+        writeAnalytics(env, {
+            style: 'unknown', country, model: 'unknown', outcome: 'fallback', triage: 'ok',
+            framingReturned: false, hasRecentHistory: false,
+            durationMs: Date.now() - t0, activityLength: 0, achievementsCount: 0,
+        });
         return Response.json(
-            { achievements: FALLBACK_ACHIEVEMENTS, mood: FALLBACK_MOOD, framing: '', degraded: true, timestamp: new Date().toISOString() },
+            { achievements: FALLBACK_ACHIEVEMENTS, mood: FALLBACK_MOOD, framing: '', degraded: true, refused: false, notice: null, timestamp: new Date().toISOString() },
             { headers: corsHeaders }
         );
     }

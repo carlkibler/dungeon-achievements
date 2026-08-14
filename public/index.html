@@ -529,6 +529,17 @@
             margin-bottom: 10px;
         }
 
+        /* The System admitting its own error rate. Reads as an aside, not a warning banner. */
+        .edgy-notice {
+            font-size: 0.82rem;
+            font-style: italic;
+            color: var(--c-muted);
+            border-left: 2px solid var(--c-accent);
+            padding: 2px 0 2px 10px;
+            margin-bottom: 12px;
+            max-width: 60ch;
+        }
+
         /* Achievement card internals. These were inline styles; they moved here so the
            title could become a real <h3> that screen readers can jump between. */
         .achievement-title {
@@ -1239,6 +1250,14 @@
             document.getElementById('activityInput').focus();
         }
 
+        // The echo-back verb. "Logging" read like the site was filing your life away for real —
+        // the AI is meant to be judging you, not keeping records on you. Each must fit `<verb>: “…”`.
+        const ECHO_VERBS = [
+            'Considering', 'Pondering', 'Weighing', 'Mulling', 'Contemplating',
+            'Squinting at', 'Sizing up', 'Chewing on', 'Assessing', 'Turning over',
+            'Rereading', 'Deliberating on', 'Studying', 'Interrogating',
+        ];
+
         const loadingMessages = [
             '📜 Opening your file. This was a mistake.',
             '👁️ The System saw that.',
@@ -1710,7 +1729,8 @@
 
             // Frame 1: echo-back (character by character)
             const echoEl = document.getElementById('loadingEcho');
-            if (echoEl) await typewriter(echoEl, `Logging: “${input}”`, 85);
+            const echoVerb = ECHO_VERBS[Math.floor(Math.random() * ECHO_VERBS.length)];
+            if (echoEl) await typewriter(echoEl, `${echoVerb}: “${input}”`, 85);
 
             // Frame 2: dossier flash
             const dossierEl = document.getElementById('loadingDossier');
@@ -1761,9 +1781,13 @@
                 await new Promise(r => setTimeout(r, 500));
 
                 currentFraming = data.framing || input;
-                displayAchievements(data.achievements);
-                saveToRecent(input, data.achievements, selectedStyle, currentFraming);
-                loadRecent();
+                displayAchievements(data.achievements, data.notice);
+                // A refusal is a real answer, but it isn't the user's achievement. Keeping it out of
+                // recents also keeps whatever they typed out of LocalStorage.
+                if (!data.refused) {
+                    saveToRecent(input, data.achievements, selectedStyle, currentFraming);
+                    loadRecent();
+                }
                 achievementsSection.removeAttribute('aria-busy');
                 achievementsSection.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 
@@ -1772,7 +1796,9 @@
                 // no idea the page changed, and has to Tab back through everything to find it.
                 // The heading (not the first card) so the next Tab lands on the first action.
                 const heading = document.getElementById('achievementsHeading');
-                announce(`${data.achievements.length} achievements ready. ${data.achievements.map(plainTitle).join('. ')}.`);
+                const count = data.achievements.length;
+                const noticeSpoken = data.notice ? `${data.notice} ` : '';
+                announce(`${noticeSpoken}${count} achievement${count === 1 ? '' : 's'} ready. ${data.achievements.map(plainTitle).join('. ')}.`);
                 if (heading) heading.focus({ preventScroll: true });
 
             } catch (error) {
@@ -1858,7 +1884,7 @@
             rejustifyCards();
         }).observe(document.getElementById('main'));
 
-        function displayAchievements(achievements) {
+        function displayAchievements(achievements, notice) {
             currentAchievements = achievements;
 
             const achievementsList = document.getElementById('achievementsList');
@@ -1874,6 +1900,7 @@
 
             const count = achievements.length;
             achievementsList.innerHTML = `
+                ${notice ? `<p class="edgy-notice">${escapeHtml(notice)}</p>` : ''}
                 <div class="bulk-actions">
                     <button class="copy-btn" style="width:auto;" data-action="copy-all"
                             aria-label="Copy all ${count} achievements as text"><span aria-hidden="true">📋</span> Copy all to Text</button>

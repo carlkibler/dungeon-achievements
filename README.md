@@ -78,7 +78,7 @@ Keep the "unofficial fan project" disclaimer. *Dungeon Crawler Carl* is Matt Din
 
 ## How it works, and the one thing to watch
 
-`POST /generate` takes `{ activity, style?, recentTitles? }` and returns three achievements, each with a title, a description, and a reward. Variety is server-side: every request rolls a mood and a seed phrase, and recent titles become a forbidden-words list so the AI stops reaching for the same jokes.
+`POST /generate` takes `{ activity, style?, recentTitles? }` and returns three achievements, each with a title, a description, and a reward (one, when it answers a crisis — see below). Variety is server-side: every request rolls a mood and a seed phrase, and recent titles become a forbidden-words list so the AI stops reaching for the same jokes.
 
 Generation tries three providers in order:
 
@@ -97,6 +97,32 @@ curl -s -X POST https://your-site.example/generate \
 ```
 
 `.github/workflows/` has a daily canary that does exactly this.
+
+### When the model says no
+
+Some activities are ones the model won't write jokes about, and it says so in prose. That prose is not
+JSON, so it used to land on the same canned "Error Handler Extraordinaire" cards as a real outage —
+the user saw a broken site, and the outage flag cried wolf.
+
+Refusals now have their own answer and their own signal. A second cheap model call runs **in parallel
+with generation** and reads the activity itself, answering one word: `ok`, `edgy`, `decline`, or
+`crisis`. It costs no wall clock (it finishes well before the generation call) and it outranks the
+generator in both directions — it refuses when the generator would have complied, and it stays quiet
+when the generator gets squeamish. The response carries `"refused": true` and leaves `"degraded"`
+alone. A refusal is served as achievements about the Dungeon's censors sealing the entry, which is
+funnier than an error and honest about what happened.
+
+Two things this deliberately does **not** do:
+
+- **It does not over-refuse.** "I murdered that test", "rawdogged my full run no music", "killed it at
+  karaoke", hangovers, weed, one night stands, speeding tickets, and petty teenage shoplifting all come
+  back as achievements. So do grief, chemo, sobriety, and layoffs — gently. Being squeamish about those
+  would be a worse product than the bug this fixed.
+- **It does not joke when someone is in trouble.** If the activity describes the writer hurting
+  themselves, the System drops the bit entirely: one quiet card, no punchline, real helplines.
+
+Anything near the line — a refusal, or an accepted-but-crude activity — carries a `notice` string the
+page shows above the cards: *"I try to avoid crass, nasty, and illegal entries, but I'm not perfect."*
 
 ---
 
