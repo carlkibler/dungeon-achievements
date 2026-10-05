@@ -36,6 +36,10 @@ The worker secrets are `ALERT_EMAIL_USER`, `ALERT_EMAIL_PASSWORD` (a dedicated
 Forward Email alias password, not an account-wide API token), and `ADMIN_TOKEN`.
 Local copies live as `DA_ALERT_EMAIL_USER`, `DA_ALERT_EMAIL_PASSWORD`, and
 `DA_MONITOR_ADMIN_TOKEN` in ignored `.env`. Preserve existing secrets when rotating one.
+The dedicated Forward Email alias must have IMAP storage enabled (`has_imap: true`).
+Its sending API shares the IMAP authentication validator; disabling storage can reject
+the first API send and trigger an IMAP-not-enabled warning, even without an IMAP client.
+Keep its forwarding recipient set to Carl.
 The CF token needs Workers Scripts Write and KV Storage Write for monitoring operations;
 the same project token retains Pages deployment and AI test permissions.
 
@@ -47,5 +51,6 @@ and logs; load them from the ignored files in a script or pass headers through s
 
 Delivery was verified on October 5, 2026: the mail service recorded both labeled test
 emails as sent, with the recipient server acknowledging `250 Message received`.
-That proves server delivery, not that the recipient read them or their inbox filter placement.
+The outage and recovery test messages were also found in Carl's synced INBOX.
+After enabling the dedicated alias's IMAP setting, a further sending-path test succeeded.
 HetrixTools also reported the new monitor active and up.
