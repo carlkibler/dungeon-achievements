@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { readWorkersAIText } from '../src/workers-ai';
 import {
     buildPrompt, buildTriagePrompt, parseTriage, resolveModelOutput, runWithFallback,
     FALLBACK_ACHIEVEMENTS, FALLBACK_MOOD,
@@ -48,12 +49,9 @@ async function callWorkersAI(prompt: string, env: Env): Promise<LLMOutput> {
     const result = await env.AI!.run(model, {
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 2000,
-    }) as { response?: string; choices?: Array<{ message?: { content?: string | null } }> };
+    });
 
-    const text = result.response ?? result.choices?.[0]?.message?.content ?? '';
-    if (!text.trim()) {
-        throw new Error(`workers-ai returned empty text for ${model}`);
-    }
+    const text = readWorkersAIText(result, model);
     return { text, model };
 }
 
