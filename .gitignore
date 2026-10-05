@@ -37,10 +37,7 @@ temp/
 # Dependency age cache (stable publish dates, per-machine)
 .deps-age-cache.json
 
-# Beads / Dolt files (added by bd init)
-.dolt/
 *.db
-.beads-credential-key
 
 # Wrangler local state / build cache
 .wrangler/
