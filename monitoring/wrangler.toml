@@ -1,0 +1,10 @@
+name = "dungeon-achievements-canary"
+main = "worker.ts"
+compatibility_date = "2026-10-05"
+account_id = "c0dd6ffd2dd099b58b892c682e74ad28"
+workers_dev = true
+[triggers]
+crons = ["7,22,37,52 * * * *"]
+[[kv_namespaces]]
+binding = "HEALTH"
+id = "9e9def043397412ca57ed9b39d6b0e67"

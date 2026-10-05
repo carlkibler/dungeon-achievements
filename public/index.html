@@ -999,6 +999,27 @@
                 padding: 14px 12px;
             }
         }
+        .recovery-notice {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0;
+            color: var(--c-muted);
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+        .recovery-notice[hidden] { display: none; }
+        .recovery-notice button {
+            flex-shrink: 0;
+            margin-left: auto;
+            background: transparent;
+            color: var(--c-muted);
+            border: 1px solid currentColor;
+            border-radius: 4px;
+            min-width: 32px;
+            min-height: 32px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -1055,6 +1076,11 @@
                 <button type="button" id="generateBtn" class="generate-btn" onclick="generateAchievements()">
                     <span aria-hidden="true">⚔️</span> <span id="generateBtnLabel">Generate Achievements</span>
                 </button>
+            </div>
+
+            <div id="recoveryNotice" class="recovery-notice">
+                <span>Oct 5 - Working again! Had a temporary problem, sorry!</span>
+                <button type="button" id="dismissRecoveryNotice" aria-label="Dismiss recovery notice"><span aria-hidden="true">×</span></button>
             </div>
 
             <section id="achievementsSection" class="achievements-section" style="display: none;" aria-labelledby="achievementsHeading">
@@ -1170,6 +1196,14 @@
 
     <script>
         const API_BASE = window.location.origin;
+        const recoveryNotice = document.getElementById('recoveryNotice');
+        const recoveryNoticeKey = 'dismissedRecoveryNotice:2026-10-05';
+        try { recoveryNotice.hidden = localStorage.getItem(recoveryNoticeKey) === '1'; } catch {}
+        document.getElementById('dismissRecoveryNotice').addEventListener('click', () => {
+            recoveryNotice.hidden = true;
+            try { localStorage.setItem(recoveryNoticeKey, '1'); } catch {}
+            document.getElementById('activityInput').focus({ preventScroll: true });
+        });
         let selectedStyle = 'default';
         let currentAchievements = [];
         let currentFraming = '';

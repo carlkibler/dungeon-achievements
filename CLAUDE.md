@@ -163,7 +163,8 @@ scripts/
 corpus/                 # Source-linked DCC achievements used to tune the prompt
 prompts/                # Reference snapshots only — NOT loaded at runtime. Editing has no effect.
 docs/                   # Brainstorm notes and design decisions
-.github/workflows/      # canary.yml watches the `degraded` flag daily; deploy.yml
+monitoring/            # independent Cloudflare Cron canary + direct email; external HetrixTools watchdog
+.github/workflows/      # manually triggered deploy.yml only; no GitHub monitoring
 wrangler.toml           # Cloudflare Pages config
 .dev.vars               # Local secrets (gitignored)
 .dev.vars.example       # Template for .dev.vars
