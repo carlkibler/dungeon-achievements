@@ -1,6 +1,7 @@
 const SITE = 'https://achievements.carlkibler.com';
 const STATE_KEY = 'health';
 export const STALE_MS = 40 * 60_000;
+const PROBE_INTERVAL_MS = 5 * 60_000;
 const REMINDER_MS = 2 * 60 * 60_000;
 
 type Status = 'healthy' | 'degraded' | 'down';
@@ -69,7 +70,7 @@ async function sendAlert(env: Env, kind: 'down' | 'degraded' | 'recovered', deta
     const subject = kind === 'recovered' ? 'RECOVERED: Dungeon Achievements is working again'
         : kind === 'down' ? 'ACTION REQUIRED: Dungeon Achievements is DOWN'
         : 'ACTION REQUIRED: Dungeon Achievements AI provider is FAILING';
-    const text = `${test ? 'THIS IS AN ALERT DELIVERY TEST. Production has not been taken down.\n\n' : ''}${subject}\n\n${detail}\n\nSite: ${SITE}\nChecked: ${new Date().toISOString()}\n\nA Cloudflare Worker tests real generation every 15 minutes. Unresolved failures repeat every two hours. A recovery email follows when the primary provider is healthy again.`;
+    const text = `${test ? 'THIS IS AN ALERT DELIVERY TEST. Production has not been taken down.\n\n' : ''}${subject}\n\n${detail}\n\nSite: ${SITE}\nChecked: ${new Date().toISOString()}\n\nA Cloudflare Worker tests real generation every 5 minutes. Unresolved failures repeat every two hours. A recovery email follows when the primary provider is healthy again.`;
     const response = await fetch('https://api.forwardemail.net/v1/emails', {
         method: 'POST',
         headers: {
@@ -116,13 +117,22 @@ async function check(env: Env): Promise<Health> {
 }
 
 export default {
-    async scheduled(_event: ScheduledController, env: Env): Promise<void> {
+    async scheduled(event: ScheduledController, env: Env): Promise<void> {
+        console.log('DA scheduled probe started', { cron: event.cron, scheduledTime: event.scheduledTime });
         await check(env);
     },
-    async fetch(request: Request, env: Env): Promise<Response> {
+    async fetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
         const path = new URL(request.url).pathname;
         if (path === '/health' && request.method === 'GET') {
-            const state = await env.HEALTH.get<Health>(STATE_KEY, 'json');
+            let state = await env.HEALTH.get<Health>(STATE_KEY, 'json');
+            // The external watchdog also drives checks if Cloudflare stops dispatching Cron.
+            // Await the real result, so a successful HTTP response still proves generation.
+            if (!state || Date.now() - state.checkedAt >= PROBE_INTERVAL_MS) {
+                console.log('DA watchdog-triggered probe started');
+                const pending = check(env);
+                ctx?.waitUntil(pending);
+                state = await pending;
+            }
             return Response.json({ ...state, fresh: !!state && Date.now() - state.checkedAt <= STALE_MS }, {
                 status: isHealthy(state, Date.now()) ? 200 : 503,
                 headers: { 'Cache-Control': 'no-store' },

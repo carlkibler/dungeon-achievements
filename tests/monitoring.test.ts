@@ -46,6 +46,20 @@ describe('generation canary', () => {
         expect(response.status).toBe(404);
         expect(fetch).not.toHaveBeenCalled();
     });
+    it('watchdog polling refreshes an overdue probe without Cron dispatch', async () => {
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+        const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ achievements: cards, degraded: false, refused: false }));
+        let state = { ...healthy, checkedAt: Date.now() - 6 * 60_000 };
+        const put = vi.fn(async (_key: string, value: string) => { state = JSON.parse(value); });
+        const env = { HEALTH: { get: vi.fn(async () => state), put } } as unknown as Parameters<typeof worker.fetch>[1];
+        const request = new Request('https://example.com/health');
+        const first = await worker.fetch(request, env);
+        expect(first.status).toBe(200);
+        expect((await first.json() as { fresh: boolean }).fresh).toBe(true);
+        expect(put).toHaveBeenCalledOnce();
+        await worker.fetch(request, env);
+        expect(fetch).toHaveBeenCalledOnce();
+    });
     it('persists failed email delivery so the independent watchdog sees an unhealthy monitor', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {});
         vi.spyOn(console, 'log').mockImplementation(() => {});

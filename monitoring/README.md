@@ -1,9 +1,13 @@
 # Generation monitoring
 
-`dungeon-achievements-canary` is a separate Cloudflare Worker. It runs at minutes
-7, 22, 37, and 52 each hour and POSTs a benign activity to the production `/generate`.
+`dungeon-achievements-canary` is a separate Cloudflare Worker. It is scheduled every five
+minutes (`*/5 * * * *`) and POSTs a benign activity to production `/generate`.
 It checks three valid cards, the refusal/degradation flags, and the known canned error
-titles. A failed probe gets one fresh retry.
+titles. A failed probe gets one fresh retry. The external watchdog also starts a real
+Worker probe through `/health` whenever the previous check is five minutes old.
+This keeps checks running even if Cloudflare stops dispatching Cron. Polls wait
+for the actual generation result. Independent locations can occasionally overlap
+while KV updates propagate. Hetrix allows 15 seconds per request; persistent slow checks also alert.
 
 The worker sends high-priority emails from `da-alerts@daneel.carlkibler.com` to
 `carl@carlkibler.com`. Subjects explicitly say `ACTION REQUIRED` for primary-provider
@@ -55,5 +59,8 @@ The outage and recovery test messages were also found in Carl's synced INBOX.
 After enabling the dedicated alias's IMAP setting, a further sending-path test succeeded.
 HetrixTools stale-state drills produced DOWN and UP messages in Carl's `Notification`
 folder, while direct DA test messages arrived in INBOX. The watchdog is active and
-was restored to healthy after each drill. The first automatic Cron execution remains
-to be observed; schedule registration and live manual execution are verified.
+was restored to healthy after each drill. No Cron dispatch was observed after initial
+registration on October 5. The watchdog-driven Worker trigger supplements Cron.
+After deploying that trigger, with no manual probe calls, the health record advanced
+at 22:17:19 UTC and reported successful primary-provider generation. Native Cron
+dispatch remains unconfirmed; automatic checks now also have a verified external trigger.

@@ -97,11 +97,12 @@ curl -s -X POST https://your-site.example/generate \
 ```
 
 The live site uses a separate Cloudflare Cron Worker in `monitoring/`, which exercises real
-generation every 15 minutes. It distinguishes primary-provider failure from canned error output,
+generation every 5 minutes. It distinguishes primary-provider failure from canned error output,
 retries once, and emails outage/degradation and recovery alerts directly. Unresolved failures
 send a reminder every two hours. GitHub is not involved in monitoring or delivery.
 
-HetrixTools checks the canary's `/health` endpoint every minute from three locations and emails
+HetrixTools checks the canary's `/health` endpoint every minute and starts overdue
+Worker probes even if Cron stops dispatching. It checks from three locations and emails
 the operator if generation fails, notification delivery fails, or the last probe is over 40 minutes
 old. See [monitoring/README.md](monitoring/README.md) for operation and delivery tests.
 
