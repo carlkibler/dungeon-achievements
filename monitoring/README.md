@@ -53,4 +53,7 @@ Delivery was verified on October 5, 2026: the mail service recorded both labeled
 emails as sent, with the recipient server acknowledging `250 Message received`.
 The outage and recovery test messages were also found in Carl's synced INBOX.
 After enabling the dedicated alias's IMAP setting, a further sending-path test succeeded.
-HetrixTools also reported the new monitor active and up.
+HetrixTools stale-state drills produced DOWN and UP messages in Carl's `Notification`
+folder, while direct DA test messages arrived in INBOX. The watchdog is active and
+was restored to healthy after each drill. The first automatic Cron execution remains
+to be observed; schedule registration and live manual execution are verified.
