@@ -1,7 +1,8 @@
 const SITE = 'https://achievements.carlkibler.com';
 const STATE_KEY = 'health';
-export const STALE_MS = 40 * 60_000;
-const PROBE_INTERVAL_MS = 5 * 60_000;
+export const STALE_MS = 3 * 60 * 60_000;
+const PROBE_INTERVAL_MS = 60 * 60_000;
+const RECOVERY_PROBE_INTERVAL_MS = 5 * 60_000;
 const REMINDER_MS = 2 * 60 * 60_000;
 
 type Status = 'healthy' | 'degraded' | 'down';
@@ -19,23 +20,12 @@ interface Env {
     ADMIN_TOKEN: string;
 }
 
-export function classifyGeneration(data: unknown): { status: Status; detail: string } {
-    const body = data as { achievements?: Array<{ title?: string; description?: string }>; degraded?: unknown; refused?: unknown } | null;
-    if (!Array.isArray(body?.achievements) || body.achievements.length !== 3 ||
-        !body.achievements.every(a => typeof a?.title === 'string' && a.title.trim() && typeof a.description === 'string' && a.description.trim()) ||
-        body.refused !== false || typeof body.degraded !== 'boolean') {
-        return { status: 'down', detail: 'Generation returned an invalid or refused achievement set.' };
+export function classifyHealth(data: unknown): { status: Status; detail: string } {
+    const body = data as { status?: string; detail?: string; check?: string } | null;
+    if (body?.check !== 'credentials-only' || !['healthy', 'degraded'].includes(body.status ?? '') || typeof body.detail !== 'string') {
+        return { status: 'down', detail: 'Site returned invalid credential-health metadata.' };
     }
-    if (body.achievements.every(a => [
-        '💥 Achievement Unlocked: Error Handler Extraordinaire',
-        '🔥 Achievement Unlocked: System Whisperer',
-        '🌀 Achievement Unlocked: Chaos Creator',
-    ].includes(a.title!))) {
-        return { status: 'down', detail: 'Visitors are receiving canned error cards. All generation providers failed or returned unusable output.' };
-    }
-    return body.degraded
-        ? { status: 'degraded', detail: 'The primary AI provider is failing. Visitors are getting generated fallback cards.' }
-        : { status: 'healthy', detail: 'Primary provider returned three genuine achievements.' };
+    return { status: body.status as Status, detail: body.detail };
 }
 
 export function alertKind(previous: Health | null, current: Health, now: number): 'down' | 'degraded' | 'recovered' | null {
@@ -53,16 +43,13 @@ export function isHealthy(state: Health | null, now: number): boolean {
 
 async function probe(): Promise<{ status: Status; detail: string }> {
     try {
-        const response = await fetch(`${SITE}/generate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ activity: 'I finished folding my laundry' }),
-            signal: AbortSignal.timeout(60_000),
-        });
-        if (!response.ok) return { status: 'down', detail: `/generate returned HTTP ${response.status}.` };
-        return classifyGeneration(await response.json());
+        const response = await fetch(`${SITE}/health`, { headers: { 'X-DA-Request-Source': 'healthcheck' }, signal: AbortSignal.timeout(25_000) });
+        if (response.status !== 200 && response.status !== 503) return { status: 'down', detail: `/health returned HTTP ${response.status}.` };
+        const result = classifyHealth(await response.json());
+        if (!response.ok && result.status === 'healthy') return { status: 'down', detail: 'Site health returned an inconsistent HTTP status.' };
+        return result;
     } catch {
-        return { status: 'down', detail: 'Generation request failed, timed out, or returned invalid JSON.' };
+        return { status: 'down', detail: 'Site credential-health request failed, timed out, or returned invalid JSON.' };
     }
 }
 
@@ -70,7 +57,7 @@ async function sendAlert(env: Env, kind: 'down' | 'degraded' | 'recovered', deta
     const subject = kind === 'recovered' ? 'RECOVERED: Dungeon Achievements is working again'
         : kind === 'down' ? 'ACTION REQUIRED: Dungeon Achievements is DOWN'
         : 'ACTION REQUIRED: Dungeon Achievements AI provider is FAILING';
-    const text = `${test ? 'THIS IS AN ALERT DELIVERY TEST. Production has not been taken down.\n\n' : ''}${subject}\n\n${detail}\n\nSite: ${SITE}\nChecked: ${new Date().toISOString()}\n\nA Cloudflare Worker tests real generation every 5 minutes. Unresolved failures repeat every two hours. A recovery email follows when the primary provider is healthy again.`;
+    const text = `${test ? 'THIS IS AN ALERT DELIVERY TEST. Production has not been taken down.\n\n' : ''}${subject}\n\n${detail}\n\nSite: ${SITE}\nChecked: ${new Date().toISOString()}\n\nA Cloudflare Worker checks site availability and OpenRouter credentials hourly without model inference. Unresolved failures repeat every two hours. A recovery email follows when the primary provider is healthy again.`;
     const response = await fetch('https://api.forwardemail.net/v1/emails', {
         method: 'POST',
         headers: {
@@ -126,8 +113,10 @@ export default {
         if (path === '/health' && request.method === 'GET') {
             let state = await env.HEALTH.get<Health>(STATE_KEY, 'json');
             // The external watchdog also drives checks if Cloudflare stops dispatching Cron.
-            // Await the real result, so a successful HTTP response still proves generation.
-            if (!state || Date.now() - state.checkedAt >= PROBE_INTERVAL_MS) {
+            // Await the real result, so a successful HTTP response still proves credential health.
+            const interval = state?.status === 'healthy' && !state.notificationError
+                ? PROBE_INTERVAL_MS : RECOVERY_PROBE_INTERVAL_MS;
+            if (!state || Date.now() - state.checkedAt >= interval) {
                 console.log('DA watchdog-triggered probe started');
                 const pending = check(env);
                 ctx?.waitUntil(pending);
@@ -146,7 +135,7 @@ export default {
             const body = await request.json() as { kind?: string };
             if (body.kind !== 'down' && body.kind !== 'recovered') return new Response('Invalid test kind', { status: 400 });
             try {
-                const id = await sendAlert(env, body.kind, 'End-to-end email delivery drill. The live generation probe is healthy.', true);
+                const id = await sendAlert(env, body.kind, 'End-to-end email delivery drill.', true);
                 return Response.json({ id, test: true });
             } catch (error) {
                 return Response.json({ error: String(error) }, { status: 502 });

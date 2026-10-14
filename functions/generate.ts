@@ -1,4 +1,6 @@
+import { requestSource, type RequestSource } from '../src/request-source';
 import OpenAI from 'openai';
+import { DEFAULT_OPENROUTER_MODEL, openRouterSettings } from '../src/openrouter-settings';
 import { readWorkersAIText } from '../src/workers-ai';
 import {
     buildPrompt, buildTriagePrompt, parseTriage, resolveModelOutput, runWithFallback,
@@ -9,7 +11,7 @@ import {
 interface Env {
     // Provider — set one. OPENROUTER_API_KEY takes precedence; AI binding is the zero-config CF fallback.
     OPENROUTER_API_KEY?: string;
-    OPENROUTER_MODEL?: string;   // default: anthropic/claude-haiku-4.5
+    OPENROUTER_MODEL?: string;   // default: anthropic/claude-haiku-5.5
     OPENROUTER_TRIAGE_MODEL?: string;  // default: same as OPENROUTER_MODEL
     AI?: Ai;                     // Cloudflare Workers AI binding (wrangler.toml: [ai] binding = "AI")
     CF_AI_MODEL?: string;        // default: @cf/meta/llama-3.3-70b-instruct-fp8-fast
@@ -27,9 +29,10 @@ async function callOpenRouter(prompt: string, env: Env): Promise<LLMOutput> {
             'X-Title': 'Dungeon Achievements Generator',
         },
     });
-    const model = env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5';
+    const model = env.OPENROUTER_MODEL || DEFAULT_OPENROUTER_MODEL;
     const message = await client.chat.completions.create({
         model,
+        ...openRouterSettings(model),
         max_tokens: 2000,
         temperature: 0.9,
         seed: Math.floor(Math.random() * 2147483647),
@@ -83,8 +86,10 @@ async function triageActivity(activity: string, env: Env): Promise<Triage> {
                 'X-Title': 'Dungeon Achievements Generator',
             },
         });
+        const model = env.OPENROUTER_TRIAGE_MODEL || env.OPENROUTER_MODEL || DEFAULT_OPENROUTER_MODEL;
         const message = await client.chat.completions.create({
-            model: env.OPENROUTER_TRIAGE_MODEL ?? env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5',
+            model,
+            ...openRouterSettings(model),
             max_tokens: 5,
             temperature: 0,
             messages: [{ role: 'user', content: buildTriagePrompt(activity) }],
@@ -97,6 +102,7 @@ async function triageActivity(activity: string, env: Env): Promise<Triage> {
 }
 
 interface AnalyticsPoint {
+    source: RequestSource;
     style: string;
     country: string;
     model: string;
@@ -114,7 +120,7 @@ function writeAnalytics(env: Env, p: AnalyticsPoint): void {
         env.ANALYTICS?.writeDataPoint({
             blobs: [
                 p.style, p.country, p.model, p.outcome,
-                p.framingReturned ? '1' : '0', p.hasRecentHistory ? '1' : '0', p.triage,
+                p.framingReturned ? '1' : '0', p.hasRecentHistory ? '1' : '0', p.triage, p.source,
             ],
             doubles: [p.durationMs, p.activityLength, p.achievementsCount],
             indexes: [p.style],
@@ -127,6 +133,7 @@ function writeAnalytics(env: Env, p: AnalyticsPoint): void {
 export const onRequestPost: PagesFunction<Env> = async (context) => {
     const { request, env } = context;
     const t0 = Date.now();
+    const source = requestSource(request);
 
     const corsHeaders = {
         'Access-Control-Allow-Origin': '*',
@@ -200,7 +207,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         }
 
         writeAnalytics(env, {
-            style, country, model, outcome, triage, framingReturned, hasRecentHistory,
+            source, style, country, model, outcome, triage, framingReturned, hasRecentHistory,
             durationMs: Date.now() - t0, activityLength, achievementsCount: achievements.length,
         });
 
@@ -220,7 +227,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     } catch (error) {
         console.error('Error generating achievements:', error);
         writeAnalytics(env, {
-            style: 'unknown', country, model: 'unknown', outcome: 'fallback', triage: 'ok',
+            source, style: 'unknown', country, model: 'unknown', outcome: 'fallback', triage: 'ok',
             framingReturned: false, hasRecentHistory: false,
             durationMs: Date.now() - t0, activityLength: 0, achievementsCount: 0,
         });

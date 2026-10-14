@@ -12,13 +12,14 @@ const payload = {
     achievements: [1, 2, 3].map(n => ({ title: `Card ${n}`, description: `Fresh joke ${n}`, reward: 'Clean socks' })),
 };
 
-async function generate(result: unknown, key?: string) {
+async function generate(result: unknown, key?: string, source?: string, activity = 'folding laundry') {
     const run = vi.fn().mockResolvedValue(result);
     const writeDataPoint = vi.fn();
     const response = await onRequestPost({
         request: new Request('https://example.com/generate', {
             method: 'POST',
-            body: JSON.stringify({ activity: 'folding laundry' }),
+            headers: source ? { 'X-DA-Request-Source': source } : {},
+            body: JSON.stringify({ activity }),
         }),
         env: { AI: { run }, ANALYTICS: { writeDataPoint }, OPENROUTER_API_KEY: key },
     } as unknown as Parameters<typeof onRequestPost>[0]);
@@ -26,6 +27,31 @@ async function generate(result: unknown, key?: string) {
 }
 
 afterEach(() => { vi.restoreAllMocks(); vi.clearAllMocks(); });
+
+it('rejects activities over 500 characters before calling a provider', async () => {
+    const { body, response, run, writeDataPoint } = await generate({}, undefined, undefined, 'x'.repeat(501));
+    expect(response.status).toBe(400);
+    expect(body).toEqual({ error: 'Activity too long (max 500 characters)' });
+    expect(create).not.toHaveBeenCalled();
+    expect(run).not.toHaveBeenCalled();
+    expect(writeDataPoint).not.toHaveBeenCalled();
+});
+
+it('uses Haiku 5.5 without thinking for both generation and triage', async () => {
+    create.mockImplementation(async (options: { max_tokens: number }) => ({
+        choices: [{ message: { content: options.max_tokens === 5 ? 'ok' : JSON.stringify(payload) } }],
+    }));
+    const { body, run, writeDataPoint } = await generate({}, 'test-key');
+    expect(create).toHaveBeenCalledTimes(2);
+    for (const [options] of create.mock.calls) {
+        expect(options.model).toBe('anthropic/claude-haiku-5.5');
+        expect(options.reasoning).toEqual({ enabled: false });
+    }
+    expect(run).not.toHaveBeenCalled();
+    expect(body.degraded).toBe(false);
+    expect(body.achievements).toEqual(payload.achievements);
+    expect(writeDataPoint.mock.calls[0][0].blobs[2]).toBe('anthropic/claude-haiku-5.5');
+});
 
 describe('Pages Workers AI fallback', () => {
     it.each([
@@ -71,4 +97,9 @@ describe('Pages Workers AI fallback', () => {
             expect(body.degraded).toBe(true);
         },
     );
+});
+
+it.each([[undefined, 'user'], ['healthcheck', 'healthcheck'], ['manual', 'manual'], ['nonsense', 'user']])('labels analytics source %s as %s', async (marker, expected) => {
+    const { writeDataPoint } = await generate({ response: payload }, undefined, marker);
+    expect(writeDataPoint.mock.calls[0][0].blobs[7]).toBe(expected);
 });

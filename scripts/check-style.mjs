@@ -13,6 +13,7 @@
 
 import { readFileSync } from 'node:fs';
 import { buildPrompt, parseAchievements } from '../src/core.ts';
+import { DEFAULT_OPENROUTER_MODEL, openRouterSettings } from '../src/openrouter-settings.ts';
 
 const ACTIVITIES = [
     'made a really good grilled cheese', 'alphabetized the spice rack at 2am', 'ran 5k in the rain',
@@ -48,7 +49,7 @@ if (!env.OPENROUTER_API_KEY) {
     console.error('check:style needs OPENROUTER_API_KEY in .dev.vars');
     process.exit(2);
 }
-const MODEL = env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5';
+const MODEL = env.OPENROUTER_MODEL || DEFAULT_OPENROUTER_MODEL;
 
 const words = text => text.trim().split(/\s+/).length;
 
@@ -58,7 +59,7 @@ async function generate(activity) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.OPENROUTER_API_KEY}` },
         body: JSON.stringify({
-            model: MODEL, max_tokens: 2000, temperature: 0.9,
+            model: MODEL, ...openRouterSettings(MODEL), max_tokens: 2000, temperature: 0.9,
             messages: [{ role: 'user', content: prompt }],
         }),
     });

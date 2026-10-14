@@ -96,15 +96,17 @@ curl -s -X POST https://your-site.example/generate \
   -d '{"activity":"canary"}' | jq .degraded    # want: false
 ```
 
-The live site uses a separate Cloudflare Cron Worker in `monitoring/`, which exercises real
-generation every 5 minutes. It distinguishes primary-provider failure from canned error output,
-retries once, and emails outage/degradation and recovery alerts directly. Unresolved failures
-send a reminder every two hours. GitHub is not involved in monitoring or delivery.
+The live site uses an hourly Cloudflare Worker in `monitoring/` to check production
+`/health`. This validates the deployed OpenRouter key and its spending limit through
+metadata only: no generation, triage, or model-token costs. It detects site/backend
+unavailability and invalid credentials, but does not test model output or account-wide
+credit balance. Failures and recovery send direct email, with reminders every two hours.
 
-HetrixTools checks the canary's `/health` endpoint every minute and starts overdue
-Worker probes even if Cron stops dispatching. It checks from three locations and emails
-the operator if generation fails, notification delivery fails, or the last probe is over 40 minutes
-old. See [monitoring/README.md](monitoring/README.md) for operation and delivery tests.
+HetrixTools polls the monitor's cached `/health` result every minute from three locations.
+It refreshes healthy credential checks hourly and unhealthy checks every five minutes,
+even if Cron stops, and alerts on failed
+checks, email delivery errors, or state older than three hours. GitHub is not involved.
+See [monitoring/README.md](monitoring/README.md) for operation and delivery tests.
 
 ### When the model says no
 
@@ -296,7 +298,7 @@ Two things to know before you touch it:
 Running this for personal use is nearly free.
 
 - **Cloudflare Pages hosting:** free tier
-- **OpenRouter (Claude Haiku 4.5, the default):** ~$0.001 per generation — 1,000 uses ≈ $1
+- **OpenRouter (Claude Haiku 5.5, the default, with reasoning disabled):** measured ~$0.00054 per generation including triage — 1,000 uses ≈ $0.54. Token rates are $0.10/M input and $0.50/M output for prompts up to 100K tokens.
 - **Cloudflare Workers AI:** free up to 10k neurons/day, ~$0.01 per 1k after
 
 There is no database and no accounts. Recent generations live in the visitor's own browser via LocalStorage, which is also why there's nothing to leak.

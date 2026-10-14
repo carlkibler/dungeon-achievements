@@ -7,11 +7,12 @@
 //
 // Env vars:
 //   OPENROUTER_API_KEY   required
-//   OPENROUTER_MODEL     optional, default: anthropic/claude-haiku-4.5
+//   OPENROUTER_MODEL     optional, default: anthropic/claude-haiku-5.5
 //   PORT                 optional, default: 8787
 
 import { createServer, IncomingMessage, ServerResponse } from 'http';
 import OpenAI from 'openai';
+import { DEFAULT_OPENROUTER_MODEL, openRouterSettings } from './src/openrouter-settings';
 import {
     buildPrompt, buildTriagePrompt, parseTriage, resolveModelOutput,
     FALLBACK_ACHIEVEMENTS, FALLBACK_MOOD, type GenerateRequest, type Triage,
@@ -19,8 +20,8 @@ import {
 
 const PORT = parseInt(process.env.PORT ?? '8787', 10);
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'anthropic/claude-haiku-4.5';
-const OPENROUTER_TRIAGE_MODEL = process.env.OPENROUTER_TRIAGE_MODEL ?? OPENROUTER_MODEL;
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || DEFAULT_OPENROUTER_MODEL;
+const OPENROUTER_TRIAGE_MODEL = process.env.OPENROUTER_TRIAGE_MODEL || OPENROUTER_MODEL;
 
 if (!OPENROUTER_API_KEY) {
     console.error('OPENROUTER_API_KEY is required');
@@ -47,6 +48,7 @@ async function triageActivity(activity: string): Promise<Triage> {
     try {
         const message = await client.chat.completions.create({
             model: OPENROUTER_TRIAGE_MODEL,
+            ...openRouterSettings(OPENROUTER_TRIAGE_MODEL),
             max_tokens: 5,
             temperature: 0,
             messages: [{ role: 'user', content: buildTriagePrompt(activity) }],
@@ -111,6 +113,7 @@ const server = createServer(async (req, res) => {
         try {
             const message = await client.chat.completions.create({
                 model: OPENROUTER_MODEL,
+                ...openRouterSettings(OPENROUTER_MODEL),
                 max_tokens: 2000,
                 temperature: 0.9,
                 seed: Math.floor(Math.random() * 2147483647),

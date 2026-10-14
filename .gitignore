@@ -45,7 +45,5 @@ temp/
 # Agent scratch — machine-specific paths, QA captures, tool logs
 .codex/
 .playwright-mcp/
-.claude/settings.*.bak
 /*.png
-.claude/.cozempic-init.lock
 .worktrees

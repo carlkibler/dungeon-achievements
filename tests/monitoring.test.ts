@@ -1,23 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import worker, { alertKind, classifyGeneration, isHealthy, STALE_MS, type Health } from '../monitoring/worker';
-import { FALLBACK_ACHIEVEMENTS } from '../src/core';
+import worker, { alertKind, classifyHealth, isHealthy, STALE_MS, type Health } from '../monitoring/worker';
 
 const now = 100_000_000;
 const healthy: Health = { status: 'healthy', checkedAt: now, detail: 'ok' };
-const cards = [1, 2, 3].map(n => ({ title: `Card ${n}`, description: 'A real joke' }));
+const metadata = { status: 'healthy', detail: 'Valid key', check: 'credentials-only' };
 afterEach(() => vi.restoreAllMocks());
 
-describe('generation canary', () => {
-    it('detects canned error cards despite HTTP 200 and even a false degraded flag', () => {
-        expect(classifyGeneration({ achievements: FALLBACK_ACHIEVEMENTS, degraded: false, refused: false }).status).toBe('down');
-    });
-    it('distinguishes working fallback from primary-provider health', () => {
-        expect(classifyGeneration({ achievements: cards, degraded: true, refused: false }).status).toBe('degraded');
-        expect(classifyGeneration({ achievements: cards, degraded: false, refused: false }).status).toBe('healthy');
-    });
-    it.each([null, {}, { achievements: cards }, { achievements: [null, null, null] },
-        { achievements: cards, degraded: false, refused: true }])('rejects malformed or refused generation %j', data => {
-        expect(classifyGeneration(data).status).toBe('down');
+describe('credential-health monitor', () => {
+    it('accepts only credential-health metadata', () => {
+        expect(classifyHealth(metadata).status).toBe('healthy');
+        expect(classifyHealth({ ...metadata, status: 'degraded' }).status).toBe('degraded');
+        expect(classifyHealth({ achievements: [] }).status).toBe('down');
     });
     it('alerts on a failure, an escalation, and recovery', () => {
         const degraded: Health = { ...healthy, status: 'degraded', lastAlertAt: now };
@@ -48,8 +41,8 @@ describe('generation canary', () => {
     });
     it('watchdog polling refreshes an overdue probe without Cron dispatch', async () => {
         vi.spyOn(console, 'log').mockImplementation(() => {});
-        const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ achievements: cards, degraded: false, refused: false }));
-        let state = { ...healthy, checkedAt: Date.now() - 6 * 60_000 };
+        const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json(metadata));
+        let state = { ...healthy, checkedAt: Date.now() - 61 * 60_000 };
         const put = vi.fn(async (_key: string, value: string) => { state = JSON.parse(value); });
         const env = { HEALTH: { get: vi.fn(async () => state), put } } as unknown as Parameters<typeof worker.fetch>[1];
         const request = new Request('https://example.com/health');
@@ -59,13 +52,35 @@ describe('generation canary', () => {
         expect(put).toHaveBeenCalledOnce();
         await worker.fetch(request, env);
         expect(fetch).toHaveBeenCalledOnce();
+        expect(fetch.mock.calls[0][0]).toBe('https://achievements.carlkibler.com/health');
+        expect(fetch.mock.calls[0][1]?.headers).toEqual({ 'X-DA-Request-Source': 'healthcheck' });
+    });
+    it.each([
+        { status: 'degraded' as const },
+        { status: 'down' as const },
+        { status: 'healthy' as const, notificationError: true },
+    ])('watchdog checks recovery after five minutes for %j without generation', async failure => {
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+        const fetch = vi.spyOn(globalThis, 'fetch')
+            .mockResolvedValueOnce(Response.json(metadata))
+            .mockResolvedValueOnce(Response.json({ id: 'recovery-message' }));
+        let state: Health = { ...healthy, ...failure, checkedAt: Date.now() - 6 * 60_000 };
+        const put = vi.fn(async (_key: string, value: string) => { state = JSON.parse(value); });
+        const env = { HEALTH: { get: vi.fn(async () => state), put }, ALERT_EMAIL_USER: 'test@example.com', ALERT_EMAIL_PASSWORD: 'test' } as unknown as Parameters<typeof worker.fetch>[1];
+        const response = await worker.fetch(new Request('https://example.com/health'), env);
+        expect(response.status).toBe(200);
+        expect(state.status).toBe('healthy');
+        expect(fetch.mock.calls[0][0]).toBe('https://achievements.carlkibler.com/health');
+        expect(fetch.mock.calls[1][0]).toBe('https://api.forwardemail.net/v1/emails');
+        await worker.fetch(new Request('https://example.com/health'), env);
+        expect(fetch).toHaveBeenCalledTimes(2);
     });
     it('persists failed email delivery so the independent watchdog sees an unhealthy monitor', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {});
         vi.spyOn(console, 'log').mockImplementation(() => {});
         const fetch = vi.spyOn(globalThis, 'fetch')
-            .mockResolvedValueOnce(Response.json({ achievements: FALLBACK_ACHIEVEMENTS, degraded: true, refused: false }))
-            .mockResolvedValueOnce(Response.json({ achievements: FALLBACK_ACHIEVEMENTS, degraded: true, refused: false }))
+            .mockResolvedValueOnce(Response.json({ status: 'down', check: 'invalid' }))
+            .mockResolvedValueOnce(Response.json({ status: 'down', check: 'invalid' }))
             .mockResolvedValueOnce(new Response('unavailable', { status: 503 }));
         const put = vi.fn();
         const env = { HEALTH: { get: vi.fn().mockResolvedValue(healthy), put }, ALERT_EMAIL_USER: 'test@example.com', ALERT_EMAIL_PASSWORD: 'test' } as unknown as Parameters<typeof worker.scheduled>[1];

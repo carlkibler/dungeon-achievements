@@ -17,10 +17,12 @@ const DATASET = 'da_generate_events';
 const args = process.argv.slice(2);
 const DAYS = parseInt(args.find(a => a.startsWith('--days='))?.split('=')[1] ?? '30', 10);
 const RAW = args.includes('--raw');
+const ALL_SOURCES = args.includes('--all-sources');
 
 // Rough OpenRouter cost per generation: ~2200 input + ~350 output tokens
 // Model costs in $/M tokens [input, output]
 const MODEL_RATES = {
+    'anthropic/claude-haiku-5.5':  [0.10,  0.50],
     'anthropic/claude-3-5-haiku':    [0.80,  4.00],
     'anthropic/claude-3-haiku':      [0.25,  1.25],
     'anthropic/claude-3-5-sonnet':   [3.00, 15.00],
@@ -53,7 +55,8 @@ function getToken() {
 
 function query(token, sql) {
     return new Promise((resolve, reject) => {
-        const body = sql.trim().replace(/\s+/g, ' ');
+        const scoped = ALL_SOURCES ? sql : sql.replace(/FROM da_generate_events\s+WHERE/g, "FROM da_generate_events WHERE blob8 = 'user' AND").replace(/FROM da_generate_events\s+ORDER/g, "FROM da_generate_events WHERE blob8 = 'user' ORDER");
+        const body = scoped.trim().replace(/\s+/g, ' ');
         const req = https.request({
             hostname: 'api.cloudflare.com',
             path: `/client/v4/accounts/${ACCOUNT_ID}/analytics_engine/sql`,
@@ -125,6 +128,8 @@ async function main() {
 
     process.stdout.write(`\n${C.amber}${C.bold}⚔  DUNGEON ACHIEVEMENTS — Analytics Dashboard${C.reset}\n`);
     process.stdout.write(`${C.gray}   Last ${DAYS} days  ·  ${new Date().toLocaleString()}${C.reset}\n`);
+
+    process.stdout.write(`  Sources: ${ALL_SOURCES ? 'all, including legacy unclassified requests' : 'user only; excludes healthcheck, manual, and legacy unclassified requests'}\n`);
 
     // ── 1. Overview ───────────────────────────────────────────────────────────
     const [ov] = await query(token, `
