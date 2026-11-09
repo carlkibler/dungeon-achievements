@@ -16,7 +16,7 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - **OpenRouter** — AI provider; model switchable via `OPENROUTER_MODEL` env var (default: `anthropic/claude-haiku-5.5`). `OPENROUTER_TRIAGE_MODEL` overrides the model for the parallel triage call; it defaults to `OPENROUTER_MODEL`. Haiku 5.5 calls explicitly disable reasoning so thinking cannot consume the output budget.
 
 **Key Design Decisions:**
-- No account or general user database — successful recents are stored in browser LocalStorage. A temporary review KV holds up to 10 refusal and 10 crisis samples; see README for retrieval and wipe steps.
+- No account or general user database — successful recents are stored in browser LocalStorage. A temporary review KV holds up to 30 refusal and 30 crisis samples; see README for retrieval and wipe steps.
 - Vanilla frontend, zero build complexity
 - Prompts inlined in `src/core.ts` (CF Workers have no filesystem access)
 - `prompts/` directory kept as source-of-truth reference for prompt editing
@@ -30,7 +30,7 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - OpenRouter call uses the `openai` SDK pointed at `https://openrouter.ai/api/v1`; sends `HTTP-Referer` + `X-Title` headers; `temperature: 0.9`, `max_tokens: 2000`.
 
 **Frontend state:**
-- LocalStorage key `recentAchievements` — array capped at 10 entries `{ activity, achievements, style, timestamp }`. Examples panel only renders when this key is empty. Temporary refusal/crisis review records live in the `REVIEW_CAPTURE` KV binding, capped at 10 per outcome, until manually wiped.
+- LocalStorage key `recentAchievements` — array capped at 10 entries `{ activity, achievements, style, timestamp }`. Examples panel only renders when this key is empty. Temporary refusal/crisis review records live in the `REVIEW_CAPTURE` KV binding, capped at 30 per outcome, until manually wiped.
 - `tsconfig.json` covers `functions/**/*` only — frontend JS in `index.html` is not type-checked.
 
 ## Gotchas
@@ -93,7 +93,7 @@ Serverless web app that generates amusing fake achievements in the style of the 
   holds the battery, including held-out cases the prompt never names; never add real captured input.
 - **Crisis wins over comedy.** A crisis answer is the single quiet `CRISIS_ACHIEVEMENTS` card with real
   helplines and never carries the `EDGY_NOTICE` — the disclaimer reads as flippant next to it. Refusals
-  and crisis answers stay out of LocalStorage recents. During the temporary review, up to 10 of each
+  and crisis answers stay out of LocalStorage recents. During the temporary review, up to 30 of each
   are captured in KV with their prompt and model output; wipe those records after review.
 - **`notice` is the AI admitting its own error rate** (`EDGY_NOTICE`, rendered as `.edgy-notice` above
   the cards). It shows on every refusal, and on a success that triage called `edgy` or that the generator

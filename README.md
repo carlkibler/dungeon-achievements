@@ -136,11 +136,11 @@ page shows above the cards: *"I try to avoid crass, nasty, and illegal entries, 
 
 ### Temporary refusal review capture
 
-For the current review only, production stores up to 10 user prompts that resolve to `refused` and 10
+For the current review only, production stores up to 30 user prompts that resolve to `refused` and 30
 that resolve to `crisis`, along with timestamp, generation/triage model, triage result, raw generation
 output, and the answer shown. It stores no IP, country, or request identifiers. Records use fixed KV
 slots under `review/refused/` and `review/crisis/`; once a
-category has 10 slots, it stops capturing that category.
+category has 30 slots, it stops capturing that category.
 
 Read the small capture set with `npx wrangler kv key list --binding REVIEW_CAPTURE --remote`, then
 `npx wrangler kv key get <key> --binding REVIEW_CAPTURE --remote --text` for each listed key. After
@@ -316,7 +316,7 @@ Running this for personal use is nearly free.
 - **Cloudflare Workers AI:** free up to 10k neurons/day, ~$0.01 per 1k after
 
 There are no accounts. Recent successful generations live in the visitor's browser via LocalStorage.
-The current temporary review capture stores up to 20 refused/crisis samples in Cloudflare KV; it contains
+The current temporary review capture stores up to 60 refused/crisis samples in Cloudflare KV; it contains
 no IP addresses or visitor identifiers and should be wiped after review.
 
 ---

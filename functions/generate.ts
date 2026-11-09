@@ -105,6 +105,8 @@ async function triageActivity(activity: string, env: Env): Promise<{ result: Tri
 
 type ReviewOutcome = 'refused' | 'crisis';
 
+const REVIEW_SLOTS_PER_OUTCOME = 30;
+
 interface ReviewCapture {
     capturedAt: string;
     outcome: ReviewOutcome;
@@ -124,8 +126,8 @@ interface ReviewCapture {
 async function captureReview(env: Env, record: ReviewCapture): Promise<void> {
     const prefix = `review/${record.outcome}/`;
     try {
-        // Fixed slots impose a hard upper bound of ten records per outcome.
-        for (let slot = 0; slot < 10; slot++) {
+        // Fixed slots impose a hard upper bound on records per outcome.
+        for (let slot = 0; slot < REVIEW_SLOTS_PER_OUTCOME; slot++) {
             const key = `${prefix}${slot}`;
             if (await env.REVIEW_CAPTURE!.get(key) !== null) continue;
             await env.REVIEW_CAPTURE!.put(key, JSON.stringify(record));
