@@ -16,6 +16,8 @@ interface Env {
     AI?: Ai;                     // Cloudflare Workers AI binding (wrangler.toml: [ai] binding = "AI")
     CF_AI_MODEL?: string;        // default: @cf/meta/llama-3.3-70b-instruct-fp8-fast
     ANALYTICS?: AnalyticsEngineDataset;
+    REVIEW_CAPTURE?: KVNamespace;
+    REVIEW_CAPTURE_ENABLED?: string;
 }
 
 interface LLMOutput { text: string; model: string }
@@ -75,8 +77,9 @@ async function callLLM(prompt: string, env: Env): Promise<LLMOutput & { degraded
  * construction: any failure returns 'ok' and the output-side heuristics decide alone. It must never
  * be the reason a request fails, and it must never invent a refusal.
  */
-async function triageActivity(activity: string, env: Env): Promise<Triage> {
-    if (!env.OPENROUTER_API_KEY) return 'ok';
+async function triageActivity(activity: string, env: Env): Promise<{ result: Triage; model: string }> {
+    const model = env.OPENROUTER_TRIAGE_MODEL || env.OPENROUTER_MODEL || DEFAULT_OPENROUTER_MODEL;
+    if (!env.OPENROUTER_API_KEY) return { result: 'ok', model: 'disabled' };
     try {
         const client = new OpenAI({
             baseURL: 'https://openrouter.ai/api/v1',
@@ -86,7 +89,6 @@ async function triageActivity(activity: string, env: Env): Promise<Triage> {
                 'X-Title': 'Dungeon Achievements Generator',
             },
         });
-        const model = env.OPENROUTER_TRIAGE_MODEL || env.OPENROUTER_MODEL || DEFAULT_OPENROUTER_MODEL;
         const message = await client.chat.completions.create({
             model,
             ...openRouterSettings(model),
@@ -94,10 +96,43 @@ async function triageActivity(activity: string, env: Env): Promise<Triage> {
             temperature: 0,
             messages: [{ role: 'user', content: buildTriagePrompt(activity) }],
         });
-        return parseTriage(message.choices[0]?.message?.content ?? '');
+        return { result: parseTriage(message.choices[0]?.message?.content ?? ''), model };
     } catch (err) {
         console.error('Triage failed; deciding from model output alone', { error: String(err) });
-        return 'ok';
+        return { result: 'ok', model };
+    }
+}
+
+type ReviewOutcome = 'refused' | 'crisis';
+
+interface ReviewCapture {
+    capturedAt: string;
+    outcome: ReviewOutcome;
+    model: string;
+    triageModel: string;
+    triage: Triage;
+    prompt: string;
+    modelOutput: string;
+    response: {
+        achievements: Achievement[];
+        framing: string;
+        mood: string;
+        notice: string | null;
+    };
+}
+
+async function captureReview(env: Env, record: ReviewCapture): Promise<void> {
+    const prefix = `review/${record.outcome}/`;
+    try {
+        // Fixed slots impose a hard upper bound of ten records per outcome.
+        for (let slot = 0; slot < 10; slot++) {
+            const key = `${prefix}${slot}`;
+            if (await env.REVIEW_CAPTURE!.get(key) !== null) continue;
+            await env.REVIEW_CAPTURE!.put(key, JSON.stringify(record));
+            return;
+        }
+    } catch (error) {
+        console.error('Temporary review capture failed', { outcome: record.outcome, error: String(error) });
     }
 }
 
@@ -176,6 +211,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         let voice = mood;
         let notice: string | null = null;
         let triage: Triage = 'ok';
+        let triageModel = 'disabled';
         // `degraded` is the outage canary and nothing else. A model declining an activity is the
         // product working, so it must not trip the alarm — it reports itself through `refused`.
         let providerDegraded = false;
@@ -195,7 +231,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         // Empty text resolves to `fallback` on its own — unless triage says the user is in crisis,
         // in which case they get the quiet answer even while the providers are down.
-        triage = await triagePromise;
+        const triageResult = await triagePromise;
+        triage = triageResult.result;
+        triageModel = triageResult.model;
         const resolved = resolveModelOutput(text, framing, triage);
         achievements = resolved.achievements;
         outcome = resolved.outcome;
@@ -210,6 +248,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             source, style, country, model, outcome, triage, framingReturned, hasRecentHistory,
             durationMs: Date.now() - t0, activityLength, achievementsCount: achievements.length,
         });
+
+        if (env.REVIEW_CAPTURE_ENABLED === 'true' && env.REVIEW_CAPTURE && source === 'user' &&
+            (outcome === 'refused' || outcome === 'crisis')) {
+            context.waitUntil(captureReview(env, {
+                capturedAt: new Date().toISOString(), outcome, model, triageModel, triage,
+                prompt, modelOutput: text,
+                response: { achievements, framing, mood: voice, notice },
+            }));
+        }
 
         return Response.json(
             {

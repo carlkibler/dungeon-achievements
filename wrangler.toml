@@ -6,6 +6,13 @@ compatibility_date = "2024-09-23"
 binding = "ANALYTICS"
 dataset = "da_generate_events"
 
+[[kv_namespaces]]
+binding = "REVIEW_CAPTURE"
+id = "56d19a083fd7486997fc9c436a834d5a"
+
+[vars]
+REVIEW_CAPTURE_ENABLED = "true"
+
 # Runtime fallback: if OpenRouter fails, /generate retries on Workers AI before
 # giving up and serving canned achievements. Free tier covers this site's volume.
 [ai]

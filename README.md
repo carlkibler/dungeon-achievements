@@ -134,6 +134,20 @@ Two things this deliberately does **not** do:
 Anything near the line — a refusal, or an accepted-but-crude activity — carries a `notice` string the
 page shows above the cards: *"I try to avoid crass, nasty, and illegal entries, but I'm not perfect."*
 
+### Temporary refusal review capture
+
+For the current review only, production stores up to 10 user prompts that resolve to `refused` and 10
+that resolve to `crisis`, along with timestamp, generation/triage model, triage result, raw generation
+output, and the answer shown. It stores no IP, country, or request identifiers. Records use fixed KV
+slots under `review/refused/` and `review/crisis/`; once a
+category has 10 slots, it stops capturing that category.
+
+Read the small capture set with `npx wrangler kv key list --binding REVIEW_CAPTURE --remote`, then
+`npx wrangler kv key get <key> --binding REVIEW_CAPTURE --remote --text` for each listed key. After
+review, delete the listed keys with `npx wrangler kv key delete <key> --binding REVIEW_CAPTURE --remote`
+and set `REVIEW_CAPTURE_ENABLED = "false"` in `wrangler.toml` before the next deploy. Do not commit
+captured values or copy them into analytics.
+
 ---
 
 ## Accessibility
@@ -301,7 +315,9 @@ Running this for personal use is nearly free.
 - **OpenRouter (Claude Haiku 5.5, the default, with reasoning disabled):** measured ~$0.00054 per generation including triage — 1,000 uses ≈ $0.54. Token rates are $0.10/M input and $0.50/M output for prompts up to 100K tokens.
 - **Cloudflare Workers AI:** free up to 10k neurons/day, ~$0.01 per 1k after
 
-There is no database and no accounts. Recent generations live in the visitor's own browser via LocalStorage, which is also why there's nothing to leak.
+There are no accounts. Recent successful generations live in the visitor's browser via LocalStorage.
+The current temporary review capture stores up to 20 refused/crisis samples in Cloudflare KV; it contains
+no IP addresses or visitor identifiers and should be wiped after review.
 
 ---
 

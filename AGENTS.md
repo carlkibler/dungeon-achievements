@@ -16,7 +16,7 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - **OpenRouter** — AI provider; model switchable via `OPENROUTER_MODEL` env var (default: `anthropic/claude-haiku-5.5`). `OPENROUTER_TRIAGE_MODEL` overrides the model for the parallel triage call; it defaults to `OPENROUTER_MODEL`. Haiku 5.5 calls explicitly disable reasoning so thinking cannot consume the output budget.
 
 **Key Design Decisions:**
-- No database — achievements stored in browser LocalStorage
+- No account or general user database — successful recents are stored in browser LocalStorage. A temporary review KV holds up to 10 refusal and 10 crisis samples; see README for retrieval and wipe steps.
 - Vanilla frontend, zero build complexity
 - Prompts inlined in `src/core.ts` (CF Workers have no filesystem access)
 - `prompts/` directory kept as source-of-truth reference for prompt editing
@@ -30,14 +30,14 @@ Serverless web app that generates amusing fake achievements in the style of the 
 - OpenRouter call uses the `openai` SDK pointed at `https://openrouter.ai/api/v1`; sends `HTTP-Referer` + `X-Title` headers; `temperature: 0.9`, `max_tokens: 2000`.
 
 **Frontend state:**
-- LocalStorage key `recentAchievements` — array capped at 10 entries `{ activity, achievements, style, timestamp }`. Examples panel only renders when this key is empty.
+- LocalStorage key `recentAchievements` — array capped at 10 entries `{ activity, achievements, style, timestamp }`. Examples panel only renders when this key is empty. Temporary refusal/crisis review records live in the `REVIEW_CAPTURE` KV binding, capped at 10 per outcome, until manually wiped.
 - `tsconfig.json` covers `functions/**/*` only — frontend JS in `index.html` is not type-checked.
 
 ## Gotchas
 
 - **`README.md` is the public-facing doc and is current** (rewritten 2026-08-12; it no longer describes
   the old AWS Bedrock/Lambda/SAM stack). It carries the self-hosting guide, so changes to ports,
-  scripts, model defaults, or the style-pill markup have to land there too.
+  scripts, model defaults, or the style-picker markup have to land there too.
 - **`server.ts` is not feature-equivalent to the Pages Function.** It serves `POST /generate` only —
   no static files, no Workers AI fallback, and no `degraded` flag in its response. Don't reach for it
   as a local stand-in for the real site; `make dev` runs the actual Workers runtime.
@@ -87,7 +87,8 @@ Serverless web app that generates amusing fake achievements in the style of the 
   `BASE_TEMPLATE` and the figures-of-speech paragraph in `TRIAGE_PROMPT` are both load-bearing.
 - **Crisis wins over comedy.** A crisis answer is the single quiet `CRISIS_ACHIEVEMENTS` card with real
   helplines and never carries the `EDGY_NOTICE` — the disclaimer reads as flippant next to it. Refusals
-  are never saved to LocalStorage recents either, which keeps the user's input out of their browser.
+  and crisis answers stay out of LocalStorage recents. During the temporary review, up to 10 of each
+  are captured in KV with their prompt and model output; wipe those records after review.
 - **`notice` is the AI admitting its own error rate** (`EDGY_NOTICE`, rendered as `.edgy-notice` above
   the cards). It shows on every refusal, and on a success that triage called `edgy` or that the generator
   self-flagged with `"edgy": true`. Never on a crisis answer.
@@ -135,6 +136,7 @@ npm test        # vitest — provider fallback chain and parsing
 
 ```
 public/
+├── favicon.svg        # Browser tab icon, drawn in the site palette
 ├── index.html          # Frontend with embedded CSS/JS
 ├── robots.txt          # Allows all; points at sitemap
 ├── sitemap.xml         # Single URL — bump <lastmod> on meaningful content changes
@@ -188,8 +190,8 @@ Playwright browser binary once: `npx playwright install chromium`.
   on the Generate button with no idea the page changed. Don't replace this with scrolling alone.
 - **Action buttons need unique `aria-label`s** — "Copy" appears a dozen times per page, so the label
   must name its achievement. `cardActions()` builds them; the a11y check fails on duplicates.
-- **The style picker is an ARIA radiogroup** with roving tabindex (one Tab stop, arrow keys move).
-  Adding a style means adding a `role="radio"` pill with `aria-checked` and `tabindex="-1"`.
+- **The style picker is a native `<select>`** with a visible label and focus ring. Add new style options
+  with values matching `STYLES` keys in `src/core.ts`.
 - **Never use `transition: all` on an interactive control** — it animates `outline-color`, so the
   focus ring fades in over 200ms instead of appearing. Name the properties.
 - **Reflow is the zoom test.** Browser zoom shrinks the CSS viewport: 1280px at 400% zoom is a 320px
@@ -203,7 +205,7 @@ Playwright browser binary once: `npx playwright install chromium`.
 
 ## Adding New Features
 
-**New style:** Both sides must agree. Add a key to the `STYLES` object in `src/core.ts` AND a matching pill button in `public/index.html` — which must carry `role="radio" aria-checked="false" tabindex="-1"` and an `aria-hidden` emoji span, or it breaks the radiogroup (`make a11y` catches this). The reference file in `prompts/styles/` is optional and not loaded at runtime.
+**New style:** Both sides must agree. Add a key to the `STYLES` object in `src/core.ts` AND a matching `<option>` in `public/index.html` with the same `value`. The reference file in `prompts/styles/` is optional and not loaded at runtime.
 
 **Switch AI model:** Change `OPENROUTER_MODEL` secret in Cloudflare dashboard, or locally in `.dev.vars`. Browse models at https://openrouter.ai/models.
 
