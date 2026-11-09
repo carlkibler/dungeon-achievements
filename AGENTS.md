@@ -85,6 +85,12 @@ Serverless web app that generates amusing fake achievements in the style of the 
   project cares about is over-refusal: "I murdered that test", "rawdogged my full run no music", grief,
   chemo, sobriety, and ordinary vice all have to come back as achievements. `DO NOT OVER-REFUSE` in
   `BASE_TEMPLATE` and the figures-of-speech paragraph in `TRIAGE_PROMPT` are both load-bearing.
+- **Triage must know it is on a DCC site — run `make triage` after touching `TRIAGE_PROMPT`.** It used to
+  be told the site jokes about "ordinary human activity" and to decline "killing a person or animal" and
+  "instructions for weapons", so it read goblins as people and alchemy-table bombs as weapons. All ten
+  refusals captured in the 2026-10 review were game violence the generator had already written cards for,
+  vetoed by triage. The line is real-world harm to real people or animals. `scripts/check-triage.mjs`
+  holds the battery, including held-out cases the prompt never names; never add real captured input.
 - **Crisis wins over comedy.** A crisis answer is the single quiet `CRISIS_ACHIEVEMENTS` card with real
   helplines and never carries the `EDGY_NOTICE` — the disclaimer reads as flippant next to it. Refusals
   and crisis answers stay out of LocalStorage recents. During the temporary review, up to 10 of each
@@ -128,6 +134,7 @@ make typecheck  # TypeScript type checking
 make seo        # metadata, DCC keywords, FAQ/JSON-LD sync, og.png, robots, sitemap
 make a11y       # axe + keyboard/focus + reflow (needs `make dev` running)
 make style      # sample real generations, measure achievement length (costs API calls)
+make triage     # triage verdict battery: game violence ok, real harm declined (costs API calls)
 make vendor     # public/vendor/ still matches the pinned package
 npm test        # vitest — provider fallback chain and parsing
 ```
@@ -158,6 +165,7 @@ scripts/
 ├── check-seo.mjs       # Guards metadata + FAQ/JSON-LD sync (no deps)
 ├── check-a11y.mjs      # axe + keyboard/focus + reflow (needs playwright)
 ├── check-style.mjs     # samples live generations, measures length distribution
+├── check-triage.mjs    # triage verdict battery against the live model
 ├── check-vendor.mjs    # public/vendor/ vs the pinned package (no deps)
 ├── check-deps-age.js   # 14-day supply-chain cooldown, runs on postinstall
 ├── analytics-report.js # CLI analytics dashboard

@@ -1,4 +1,4 @@
-.PHONY: dev deploy secret typecheck seo a11y style vendor open help
+.PHONY: dev deploy secret typecheck seo a11y style triage vendor open help
 
 help:
 	@echo "dev       - local dev server (uses .dev.vars)"
@@ -8,6 +8,7 @@ help:
 	@echo "seo       - check metadata, DCC keywords, FAQ/JSON-LD sync, og.png"
 	@echo "a11y      - axe + keyboard/focus + reflow checks (needs 'make dev' running)"
 	@echo "style     - sample real generations and measure achievement length (costs API calls)"
+	@echo "triage    - run the triage verdict battery against the live model (costs API calls)"
 	@echo "vendor    - check public/vendor/ matches the pinned package"
 	@echo "open      - open the deployed site"
 
@@ -23,6 +24,9 @@ a11y:
 
 style:
 	node --experimental-strip-types scripts/check-style.mjs
+
+triage:
+	node --experimental-strip-types scripts/check-triage.mjs
 
 dev:
 	npx wrangler pages dev public

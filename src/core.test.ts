@@ -301,6 +301,15 @@ describe('triage prompt', () => {
         expect(prompt).toContain('this commute is killing me');
         expect(prompt).toContain('Grief, illness, addiction recovery, caregiving');
     });
+
+    // Every captured refusal in the 2026-10 review was game violence the generator had handled.
+    // `make triage` proves the rule binds; this only proves it is still present.
+    it('treats game and fiction violence as the premise, and real-world harm as the line', () => {
+        const prompt = buildTriagePrompt('slit a goblin\'s throat');
+        expect(prompt).toContain('Dungeon Crawler Carl fan site');
+        expect(prompt).toContain('Game and fiction violence is ok, however gory');
+        expect(prompt).toContain('real-world harm to a real person or a pet/animal');
+    });
 });
 
 describe('achievement prompt', () => {

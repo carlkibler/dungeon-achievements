@@ -534,12 +534,14 @@ export const EDGY_NOTICE = "I try to avoid crass, nasty, and illegal entries, bu
 export type Triage = 'ok' | 'edgy' | 'decline' | 'crisis';
 
 export const TRIAGE_PROMPT = `You triage one line of user input for a comedy achievement generator.
-The generator writes jokes about ordinary human activity. Answer with exactly one word.
+It is a Dungeon Crawler Carl fan site: the generator writes jokes about anything a person did, in
+real life or inside a game, tabletop campaign, or story. Answer with exactly one word.
 
 crisis  — the writer describes harming THEMSELVES: self-injury, suicidal intent, starving themselves.
-decline — the writer describes doing real harm to someone else, or asks for help doing it: killing or
-          beating a person or animal, sexual violence, anything sexual involving a minor, stalking,
-          hate directed at a group, or instructions for weapons or attacks.
+decline — the writer describes doing real-world harm to a real person or a pet/animal, or asks for
+          real-world help doing it: violence against people or animals, sexual violence, anything
+          sexual involving a minor, stalking, hate directed at a group, or actual instructions for
+          real weapons or attacks.
 edgy    — real but petty misbehaviour or crude subject matter: drink, drugs, sex between adults, nudity,
           bodily functions, speeding, small-time theft, lying, being a bad friend.
 ok      — everything else, including anything ordinary, sad, or tender.
@@ -548,6 +550,9 @@ Violent and crude figures of speech are ok, not decline. "I murdered that test",
 karaoke", "died laughing", "this commute is killing me", "my code is a war crime", "nuked my inbox",
 "rawdogged the flight with no headphones" are all ok. Grief, illness, addiction recovery, caregiving,
 and job loss are ok — they are not crisis unless the writer is harming themselves right now.
+Game and fiction violence is ok, however gory: killing goblins, mobs, monsters, bosses, zombies,
+dragons, or NPCs; crafting bombs or potions in a game; wiping a D&D party. Dungeon crawling is the
+premise of the site. Swatting insects, killing pests, fishing, and butchering food are ok too.
 Judge what the writer says they did, not the worst reading of their words.
 
 INPUT: {{ACTIVITY}}
