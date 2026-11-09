@@ -7,7 +7,7 @@
     "deploy": "wrangler pages deploy public",
     "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
-    "analytics": "node scripts/analytics-report.js",
+    "analytics": "node --env-file-if-exists=.env scripts/analytics-report.js",
     "provision-token": "node scripts/provision-token.js",
     "postinstall": "node scripts/check-deps-age.js",
     "vendor:justif": "cp node_modules/justif/dist/auto.js public/vendor/justif/auto.js && cp node_modules/justif/LICENSE public/vendor/justif/LICENSE && node -p \"require('justif/package.json').version\" > public/vendor/justif/VERSION",
