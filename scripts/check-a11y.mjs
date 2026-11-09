@@ -72,25 +72,26 @@ console.log('\nkeyboard & screen reader behaviour');
 {
   const page = await newPage();
 
-  await page.keyboard.press('Tab');
-  check('skip link is the first tab stop',
+  check('typing field receives focus on page load',
+    await page.evaluate(() => document.activeElement.id) === 'activityInput');
+  await page.keyboard.press('Shift+Tab');
+  check('skip link remains reachable from the typing field',
     await page.evaluate(() => document.activeElement.getAttribute('href')) === '#activityInput');
+  await page.keyboard.press('Tab');
+  check('skip link returns to the typing field',
+    await page.evaluate(() => document.activeElement.id) === 'activityInput');
 
-  // The style picker must be ONE tab stop, not seven.
+  // The native style dropdown is one keyboard control.
   const stops = [];
   for (let i = 0; i < 6; i++) {
     await page.keyboard.press('Tab');
     stops.push(await page.evaluate(() => document.activeElement.className.split(' ')[0]));
   }
-  check('style picker is a single tab stop', stops.filter(s => s === 'style-pill').length === 1);
+  check('style picker is a single native dropdown', stops.filter(s => s === 'style-select').length === 1);
 
-  await page.focus('.style-pill[data-style="default"]');
-  await page.keyboard.press('ArrowRight');
-  const arrowed = await page.evaluate(() => ({
-    focused: document.activeElement.dataset.style,
-    checked: document.querySelectorAll('.style-pill[aria-checked="true"]').length,
-  }));
-  check('arrow keys move and select one option', arrowed.focused === 'corporate' && arrowed.checked === 1);
+  await page.selectOption('#styleSelect', 'corporate');
+  check('style dropdown changes the selected style',
+    await page.$eval('#styleSelect', el => el.value) === 'corporate');
 
   // Focus rings must be present the instant focus lands — `transition: all` used to
   // fade them in over 200ms, which is a focus indicator you cannot rely on.
@@ -128,11 +129,33 @@ console.log('\nkeyboard & screen reader behaviour');
   check('every action button has a unique accessible name',
     names.every(Boolean) && new Set(names).size === names.length, `${names.length} buttons`);
 
+  const expectedActions = await page.$$eval('#achievementsList button[data-action]', buttons =>
+    buttons.map(b => `${b.dataset.scope}:${b.dataset.index}:${b.dataset.action}`));
+  const focusedActions = [];
+  for (const _ of expectedActions) {
+    await page.keyboard.press('Tab');
+    focusedActions.push(await page.evaluate(() => {
+      const el = document.activeElement;
+      return el.matches('#achievementsList button[data-action]')
+        ? `${el.dataset.scope}:${el.dataset.index}:${el.dataset.action}`
+        : null;
+    }));
+  }
+  check('Tab reaches every achievement action in order',
+    focusedActions.join('|') === expectedActions.join('|'), focusedActions.join(' → '));
+
   const headings = await page.$$eval('h1,h2,h3,h4,h5,h6', hs => hs.map(h => +h.tagName[1]));
   const skipped = headings.some((l, i) => i > 0 && l > headings[i - 1] + 1);
   check('heading outline skips no levels', !skipped, headings.map(l => `h${l}`).join(' '));
 
-  await page.click('#achievementsList .achievement:first-child [data-action="copy"]');
+  await page.evaluate(() => document.getElementById('achievementsHeading').focus());
+  await page.keyboard.press('Tab');
+  const firstCardCopyIndex = expectedActions.indexOf('main:0:copy');
+  await page.evaluate(() => document.getElementById('achievementsHeading').focus());
+  for (let i = 0; i <= firstCardCopyIndex; i++) await page.keyboard.press('Tab');
+  check('Tab from the results heading reaches the first card Copy action',
+    await page.evaluate(() => document.activeElement.id) === 'copy-main-0');
+  await page.keyboard.press('Enter');
   await page.waitForTimeout(250);
   check('copying announces to screen readers',
     /copied/i.test(await page.evaluate(() => document.getElementById('srStatus').textContent)));
@@ -175,7 +198,9 @@ console.log('\nreflow — no horizontal overflow (also the browser-zoom test)');
     const bad = [];
     for (const w of WIDTHS) {
       await page.setViewportSize({ width: w, height: 900 });
-      await page.waitForTimeout(100);
+      // Justif reflows footer lines across a few animation frames after resize;
+      // 300ms verifies its settled layout rather than catching a transient width.
+      await page.waitForTimeout(300);
       const r = await page.evaluate(() => {
         const de = document.documentElement, vw = de.clientWidth;
         const off = [...document.querySelectorAll('body *')]
